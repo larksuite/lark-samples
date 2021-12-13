@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="/public/index.css"/>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>网页应用</title>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js">
+    </script>
+</head>
+<body>
+<div>
+    <div class="img">
+        <div
+                id="img_div"
+                class="img_div"
+        >
+            <img src="{{ user_info.avatar_url }}" width="100%" height="" 100%/>
+        </div>
+        <span
+                class="hello_text"
+        >Hello</span
+        >
+        <div
+                id="hello_text_name_zh"
+                class="hello_text_name"
+        >{{ user_info.name }}</div>
+        <div
+                id="hello_text_name_en"
+                class="hello_text_name"
+        >{{ user_info.en_name }}</div>
+        <div
+                id="hello_text_welcome"
+                class="hello_text_welcome"
+        >
+        </div>
+    </div>
+    <div class="icon"><img src="../public/svg/icon.svg"/></div>
+</div>
+
+<script>
+    let lang = window.navigator.language;
+    $(document).ready(function () {
+        $('#hello_text_welcome').text(lang === "zh-CN" ? "欢迎使用飞书" : "Welcome to Feishu");
+        if (lang === 'zh-CN') {
+            $('#hello_text_name_en').hide();
+        } else {
+            $('#hello_text_name_zh').hide();
+        }
+    });
+</script>
+</body>
+</html>

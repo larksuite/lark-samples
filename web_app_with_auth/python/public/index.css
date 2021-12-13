@@ -1,0 +1,92 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #ebf1fd;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+}
+
+.header .time-message {
+    display: flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 33.5px;
+    justify-content: space-between;
+}
+
+.header .title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+}
+
+.header .title span {
+    font-weight: 500;
+    font-size: 17px;
+}
+
+.img {
+    width: 120px;
+    height: 239px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.img_div {
+    border-radius: 50%;
+    overflow: hidden;
+    width: 88px;
+    height: 88px;
+    border: 3px white solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hello_text {
+    font-size: 26px;
+    font-weight: 600;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.hello_text_name {
+    font-size: 20px;
+    color: #3370ff;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    text-align: center;
+}
+
+.hello_text_welcome {
+    position: absolute;
+    bottom: 0;
+    size: 20px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.icon {
+    position: absolute;
+    bottom: 44px;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
