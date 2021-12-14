@@ -1,8 +1,8 @@
 # Quickly develop a web app
 
-If you need to develop a web app that obtains the information of logged-in users from the Lark client-side, you can
-refer to this article as an example. This example uses the Lark client jssdk. The login status of the client-side is
-used to carry out the logged-in user information query feature.
+If you need to develop a web app that obtains the information of logged-in users from the Feishu, you can refer to this
+article as an example. This example uses the Feishu client jssdk. The login status of the client-side is used to carry out
+the logged-in user information query feature.
 
 ## Runtime environment
 
@@ -32,8 +32,6 @@ used to carry out the logged-in user information query feature.
     cd lark-samples/web_app_with_jssdk/python
     ```
 
-   **Note**: The second command line must be used with an unzip tool to unpack the file within the line in order to
-   execute the third command line.
 
 6. Edit environment variables Edit the application credential data in the `.env` file to real data.
 
@@ -62,7 +60,7 @@ sh exec.sh
 .\exec.ps1
 ```
 
-Once it's running, you can only try it in Lark. Go to **Lark** > **Workplace** > Search for app name > Open app.
+Once it's running, you can only try it in Feishu. Go to **Feishu** > **Workplace** > Search for app name > Open app.
 
 ## Running Locally
 
@@ -100,6 +98,6 @@ Once it's running, you can only try it in Lark. Go to **Lark** > **Workplace** >
     python3 server.py
     ```
 
-Once it's running, you can only try it in Lark. Go to **Lark** > **Workplace** > Search for app name > Open app.
+Once it's running, you can only try it in Feishu. Go to **Feishu** > **Workplace** > Search for app name > Open app.
  
  

@@ -30,8 +30,6 @@ git clone https://github.com/larksuite/lark-samples.git
 cd lark-samples/web_app_with_jssdk/python
 ```
 
-**注意**：第二行命令需要配套有解压工具使用，将压缩包原地解压，才能顺利执行第三行命令。
-
 6、修改环境值
 
 修改`.env`文件中应用凭证数据为真实数据。

@@ -1,8 +1,8 @@
 # Quickly create a login-free web app
 
-If you need to develop a web app that obtains the information of logged-in Lark users from the browser, you can refer to
+If you need to develop a web app that obtains the information of logged-in Feishu users from the browser, you can refer to
 this article as an example. As an example about getting started with web app, this article describes how to use the
-identity verification capabilities provided by Lark Open Platform to complete the login-free web page of a third party
+identity verification capabilities provided by Feishu Open Platform to complete the login-free web page of a third party
 and obtain logged-in user information
 
 ## Runtime environment
@@ -40,9 +40,6 @@ and obtain logged-in user information
    cd lark-samples/web_app_with_auth_v1/python
    ```
 
-**Note**: The second command line must be used with an unzip tool to unpack the file within the line in order to execute
-the third command line.
-
 6. Edit environment variables Edit the app credential data in the `.env` file to real data.
 
    ```
@@ -52,10 +49,10 @@ the third command line.
 
    The two parameters above can be found in [Developer Console](https://open.larksuite.com/app) > **Credentials & Basic
    Info**.
-   
+
    The redirect URL configuration shall include the `CALLBACK_URL` value defined in the `.env` file. Otherwise, the
    redirection will report an error after login.
-   
+
    ```
    CALLBACK_URL=http://127.0.0.1:3000/callback
    ```
@@ -119,8 +116,8 @@ User information will be visible once the login is successful.
    After running, directly visit `http://127.0.0.1:3000` and follow the link instructions to scan the code/authorize
    login. User information will be visible once the login is successful.
 
-## Try the web app on Lark
+## Try the web app on Feishu
 
-Go to **Lark** > **Workplace** >Search for app name > Open app.
+Go to **Feishu** > **Workplace** >Search for app name > Open app.
 
  

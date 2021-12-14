@@ -21,8 +21,6 @@ can extend the event processing functions of bot based on this example.
     cd lark-samples/robot_quick_start/python
     ```
 
-   **Note**: The second command line must be used with an unzip tool to unpack the file within the line in order to
-   execute the third command line.
 
 4. Edit environment variables
 
