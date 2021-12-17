@@ -1,4 +1,5 @@
 # Quickly develop a bot
+> ⚠️ In order to facilitate the implementation of this tutorial, a reverse proxy tool (ngork) is used. This tool is only suitable for the development and testing phase and cannot be used in the production environment. Before using it, you need to confirm whether it complies with the company's network security policy.
 
 This example shows how to use the Open Platform's bot function to have a bot receive user messages and make replies. You
 can extend the event processing functions of bot based on this example.
