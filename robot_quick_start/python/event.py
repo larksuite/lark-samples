@@ -89,6 +89,12 @@ class EventManager(object):
         if callback_type == "url_verification":
             event = UrlVerificationEvent(dict_data)
             return EventManager.event_callback_map.get(event.event_type()), event
+
+        # only handle event v2
+        schema = dict_data.get("schema")
+        if schema is None:
+            raise InvalidEventException("request is not callback event(v2)")
+
         # get event_type
         event_type = dict_data.get("header").get("event_type")
         # build event
@@ -103,7 +109,7 @@ class EventManager(object):
             # data haven't been encrypted
             return data
         if encrypt_key == "":
-            raise Exception("encrypt_key is necessary")
+            raise Exception("ENCRYPT_KEY is necessary")
         cipher = AESCipher(encrypt_key)
 
         return json.loads(cipher.decrypt_string(encrypt_data))

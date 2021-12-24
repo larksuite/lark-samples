@@ -29,7 +29,7 @@ event_manager = EventManager()
 def request_url_verify_handler(req_data: UrlVerificationEvent):
     # url verification, just need return challenge
     if req_data.event.token != VERIFICATION_TOKEN:
-        return Exception("invalid request")
+        raise Exception("VERIFICATION_TOKEN is invalid")
     return jsonify({"challenge": req_data.event.challenge})
 
 

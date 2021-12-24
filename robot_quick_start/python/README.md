@@ -1,5 +1,6 @@
 # Quickly develop a bot
-> ⚠️ In order to facilitate the implementation of this tutorial, a reverse proxy tool (ngork) is used. This tool is only suitable for the development and testing phase and cannot be used in the production environment. Before using it, you need to confirm whether it complies with the company's network security policy.
+
+> ⚠️ In order to facilitate the implementation of this tutorial, a reverse proxy tool (ngrok) is used. This tool is only suitable for the development and testing phase and cannot be used in the production environment. Before using it, you need to confirm whether it complies with the company's network security policy.
 
 This example shows how to use the Open Platform's bot function to have a bot receive user messages and make replies. You
 can extend the event processing functions of bot based on this example.
@@ -99,12 +100,15 @@ Subscriptions** page to configure the public network request URL.
 
 - Use the following commands to obtain the public network URL
 
+  **Note**: Before using a reverse proxy tool (ngrok), you need to determine whether it complies with the company's
+  network security policy.
+
+  **Note**: Need to get the token value in [ngrok](https://dashboard.ngrok.com/signup) in advance.
    ```
-   ngrok authtoken <token>
+   ngrok authtoken <token> // <token> needs to be replaced
    ngrok http 3000
    ```
 
-  **Note**: The token can be obtained from [ngrok](https://dashboard.ngrok.com/signup).
 
 2. Go to **Features** > **Bot** to enable **Using Bot**.
 3. Go to the **Event Subscriptions** page to configure the **Request URL**. Use the tool to generate the domain and fill
