@@ -1,4 +1,4 @@
-const lang = window.navigator.language;
+let lang = window.navigator.language;
 
 $('document').ready(apiAuth())
 
@@ -29,9 +29,18 @@ function apiAuth() {
         });
         window.h5sdk.ready(() => {
                 // the interface needs to be called after authentication, others can be called directly
+                tt.getSystemInfo({
+                    success(res) {
+                        console.log("getSystemInfo succeed");
+                        lang = res.language;
+                    },
+                    fail(err) {
+                        console.log(`getSystemInfo failed, err:`, JSON.stringify(err));
+                    }
+                })
                 tt.getUserInfo({
                     success(res) {
-                        console.log("getUserInfo succeed")
+                        console.log("getUserInfo succeed");
                         showUser(res.userInfo)
                     },
                     fail(err) {
@@ -48,6 +57,6 @@ function apiAuth() {
 function showUser(res) {
     // 展示用户信息
     $('#img_div').html(`<img src="${res.avatarUrl}" width="100%" height=""100%/>`)
-    $('#hello_text_name').text(lang === "zh-CN" ? `${res.nickName}` : `${res.i18nName.en_us}`);
-    $('#hello_text_welcome').text(lang === "zh-CN" ? "欢迎使用飞书" : "welcome to Feishu");
+    $('#hello_text_name').text(lang === "zh_CN" || lang === "zh-CN" ? `${res.nickName}` : `${res.i18nName.en_us}`);
+    $('#hello_text_welcome').text(lang === "zh_CN" || lang === "zh-CN" ? "欢迎使用飞书" : "welcome to Feishu");
 }

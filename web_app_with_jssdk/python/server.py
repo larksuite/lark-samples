@@ -48,7 +48,7 @@ def get_signature():
     # 获取jsapi签名相关数据
     url = request.args.get("url")
     ticket = auth.get_ticket()
-    timestamp = str(int(time.time()) * 1000)
+    timestamp = int(time.time()) * 1000
     verify_str = "jsapi_ticket={}&noncestr={}&timestamp={}&url={}".format(
         ticket, NONCE_STR, timestamp, url
     )
