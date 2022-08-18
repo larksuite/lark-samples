@@ -1,0 +1,10 @@
+{
+  "name": "robot-examples",
+  "version": "1.0.0",
+  "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.0.2"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}

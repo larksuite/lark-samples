@@ -5,6 +5,7 @@ This is used to open Feishu code samples to help developers quickly use Feishu c
 - [Quickly develop a bot](robot_quick_start/python/README.md)
 - [Quickly develop a web app](web_app_with_jssdk/python/README.md)
 - [Quickly create a login-free web app](web_app_with_auth/python/README.md)
+- [React+nodejs quickly implements web applications and free web applications](js_web_app/README.md)
 
 ## License
 - Apache 2.0
