@@ -17,8 +17,8 @@
 
 3、拉取最新代码到本地，并进入对应目录。
 ```shell
-git clone git@github.com:larksuite/lark-samples.git
-cd react_and_nodejs/robot-examples
+git clone https://github.com/larksuite/lark-samples.git
+cd lark-samples/react_and_nodejs/robot
 ```
 
 4、将第2步拿到的APP_ID和APP_SECRET填入react_and_nodejs/robot-examples/config.js中。

@@ -3,7 +3,7 @@ const http = require('http');
 const {
     APP_ID,
     APP_SECRET
-} = require('../config');
+} = require('./config');
 
 if (!APP_ID || !APP_SECRET) {
     throw new Error('需在config.js中填写APP_ID和APP_SECRET');
