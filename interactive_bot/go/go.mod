@@ -2,7 +2,7 @@ module main
 
 go 1.22.5
 
-require github.com/larksuite/oapi-sdk-go/v3 v3.3.5
+require github.com/larksuite/oapi-sdk-go/v3 v3.4.7
 
 require (
 	github.com/gogo/protobuf v1.3.2 // indirect
