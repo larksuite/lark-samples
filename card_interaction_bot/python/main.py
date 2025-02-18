@@ -11,8 +11,8 @@ from lark_oapi.event.callback.model.p2_card_action_trigger import (
 )
 
 WELCOME_CARD_ID = os.getenv("WELCOME_CARD_ID")
-ALARM_CARD_ID = os.getenv("ALARM_CARD_ID")
-RESOLVED_CARD_ID = os.getenv("RESOLVED_CARD_ID")
+ALERT_CARD_ID = os.getenv("ALERT_CARD_ID")
+ALERT_RESOLVED_CARD_ID = os.getenv("ALERT_RESOLVED_CARD_ID")
 
 
 # 发送消息
@@ -67,7 +67,7 @@ def send_alarm_card(receive_id_type, receive_id):
         {
             "type": "template",
             "data": {
-                "template_id": ALARM_CARD_ID,
+                "template_id": ALERT_CARD_ID,
                 "template_variable": {
                     "alarm_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 },
@@ -153,7 +153,7 @@ def do_p2_card_action_trigger(data: P2CardActionTrigger) -> P2CardActionTriggerR
             "card": {
                 "type": "template",
                 "data": {
-                    "template_id": RESOLVED_CARD_ID,
+                    "template_id": ALERT_RESOLVED_CARD_ID,
                     "template_variable": {
                         "alarm_time": action.value["time"],
                         "open_id": open_id,

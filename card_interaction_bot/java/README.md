@@ -10,6 +10,6 @@
 
 ## 启动项目
 
-macOS/Linux： `WELCOME_CARD_ID=<欢迎卡片ID> ALARM_CARD_ID=<告警卡片ID> RESOLVED_CARD_ID=<已处理卡片ID> APP_ID=<应用ID> APP_SECRET=<应用Secret> ./bootstrap.sh`
+macOS/Linux： `WELCOME_CARD_ID=<欢迎卡片ID> ALERT_CARD_ID=<告警卡片ID> ALERT_RESOLVED_CARD_ID=<已处理卡片ID> APP_ID=<应用ID> APP_SECRET=<应用Secret> ./bootstrap.sh`
 
-Windows： `set WELCOME_CARD_ID=<欢迎卡片ID>&set ALARM_CARD_ID=<告警卡片ID>&set RESOLVED_CARD_ID=<已处理卡片ID>&set APP_ID=<应用ID>&APP_SECRET=<应用Secret>&bootstrap.bat`
+Windows： `set WELCOME_CARD_ID=<欢迎卡片ID>&set ALERT_CARD_ID=<告警卡片ID>&set ALERT_RESOLVED_CARD_ID=<已处理卡片ID>&set APP_ID=<应用ID>&APP_SECRET=<应用Secret>&bootstrap.bat`

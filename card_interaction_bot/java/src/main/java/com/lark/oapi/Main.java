@@ -1,7 +1,11 @@
 package com.lark.oapi;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+
+import com.google.gson.JsonParser;
 import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.event.EventDispatcher;
 import com.lark.oapi.event.cardcallback.P2CardActionTriggerHandler;
@@ -19,9 +23,6 @@ import com.lark.oapi.service.im.v1.model.P2ChatAccessEventBotP2pChatEnteredV1;
 import com.lark.oapi.service.im.v1.model.P2MessageReceiveV1;
 import com.lark.oapi.service.im.v1.model.ext.MessageTemplate;
 import com.lark.oapi.service.im.v1.model.ext.MessageTemplateData;
-import com.google.gson.JsonParser;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 
 public class Main {
@@ -29,8 +30,8 @@ public class Main {
     private static final String APP_ID = System.getenv("APP_ID");
     private static final String APP_SECRET = System.getenv("APP_SECRET");
     private static final String WELCOME_CARD_ID = System.getenv("WELCOME_CARD_ID");
-    private static final String ALARM_CARD_ID = System.getenv("ALARM_CARD_ID");
-    private static final String RESOLVED_CARD_ID = System.getenv("RESOLVED_CARD_ID");
+    private static final String ALERT_CARD_ID = System.getenv("ALERT_CARD_ID");
+    private static final String ALERT_RESOLVED_CARD_ID = System.getenv("ALERT_RESOLVED_CARD_ID");
 
 
     /**
@@ -102,7 +103,7 @@ public class Main {
          * https://open.feishu.cn/document/uAjLw4CM/ukzMukzMukzM/feishu-cards/send-feishu-card#718fe26b
          */
         String replyContent = new MessageTemplate.Builder()
-                .data(new MessageTemplateData.Builder().templateId(ALARM_CARD_ID)
+                .data(new MessageTemplateData.Builder().templateId(ALERT_CARD_ID)
                     .templateVariable(new HashMap<String, Object>() {
                         {
                             put("alarm_time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -269,7 +270,7 @@ public class Main {
 
                         CallBackCard card = new CallBackCard();
                         card.setType("template");
-                        card.setData(new MessageTemplateData.Builder().templateId(RESOLVED_CARD_ID)
+                        card.setData(new MessageTemplateData.Builder().templateId(ALERT_RESOLVED_CARD_ID)
                                 .templateVariable(new HashMap<String, Object>() {
                                     {
                                         put("alarm_time", event.getEvent().getAction().getValue().get("time"));

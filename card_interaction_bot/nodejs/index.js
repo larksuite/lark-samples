@@ -10,7 +10,7 @@ const baseConfig = {
   domain: process.env.BASE_DOMAIN, // 请求域名，如：https://open.feishu.cn。
 };
 
-const { WELCOME_CARD_ID, ALARM_CARD_ID, RESOLVED_CARD_ID } = process.env;
+const { WELCOME_CARD_ID, ALERT_CARD_ID, ALERT_RESOLVED_CARD_ID } = process.env;
 
 /**
  * 创建 LarkClient 对象，用于请求OpenAPI, 并创建 LarkWSClient 对象，用于使用长连接接收事件。
@@ -68,7 +68,7 @@ async function sendAlarmCard(receiveIdType, receiveId) {
       content: JSON.stringify({
         type: 'template',
         data: {
-          template_id: ALARM_CARD_ID,
+          template_id: ALERT_CARD_ID,
           template_variable: {
             alarm_time: new Date().toLocaleString('zh-CN', {
               year: 'numeric',
@@ -194,7 +194,7 @@ const eventDispatcher = new Lark.EventDispatcher({}).register({
         card: {
           type: 'template',
           data: {
-            template_id: RESOLVED_CARD_ID,
+            template_id: ALERT_RESOLVED_CARD_ID,
             template_variable: {
               alarm_time: value.time,
               open_id: open_id,

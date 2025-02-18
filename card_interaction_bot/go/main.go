@@ -72,12 +72,12 @@ func sendWelcomeCard(client *lark.Client, openID string) {
  *
  */
 func sendAlarmCard(client *lark.Client, receiveIdType string, receiveId string) {
-	ALARM_CARD_ID := os.Getenv("ALARM_CARD_ID")
+	ALERT_CARD_ID := os.Getenv("ALERT_CARD_ID")
 
 	card := &callback.Card{
 		Type: "template",
 		Data: &callback.TemplateCard{
-			TemplateID: ALARM_CARD_ID,
+			TemplateID: ALERT_CARD_ID,
 			TemplateVariable: map[string]interface{}{
 				"alarm_time": time.Now().Format("2006-01-02 15:04:05"),
 			},
@@ -118,7 +118,7 @@ func sendAlarmCard(client *lark.Client, receiveIdType string, receiveId string) 
 func main() {
 	app_id := os.Getenv("APP_ID")
 	app_secret := os.Getenv("APP_SECRET")
-	RESOLVED_CARD_ID := os.Getenv("RESOLVED_CARD_ID")
+	ALERT_RESOLVED_CARD_ID := os.Getenv("ALERT_RESOLVED_CARD_ID")
 
 	/**
 	 * 创建 LarkClient 对象，用于请求OpenAPI。
@@ -226,7 +226,7 @@ func main() {
 					Card: &callback.Card{
 						Type: "template",
 						Data: &callback.TemplateCard{
-							TemplateID: RESOLVED_CARD_ID,
+							TemplateID: ALERT_RESOLVED_CARD_ID,
 							TemplateVariable: map[string]interface{}{
 								"alarm_time":    event.Event.Action.Value["time"],
 								"open_id":       event.Event.Operator.OpenID,
