@@ -1,10 +1,6 @@
 package com.lark.oapi;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
-import com.lark.oapi.Client;
 import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.event.EventDispatcher;
 import com.lark.oapi.event.cardcallback.P2CardActionTriggerHandler;

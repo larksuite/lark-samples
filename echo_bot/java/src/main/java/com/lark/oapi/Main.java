@@ -1,5 +1,6 @@
 package com.lark.oapi;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -49,12 +50,12 @@ public class Main {
                      * Parse the message sent by the user.
                      */
                     String content = event.getEvent().getMessage().getContent();
-                    Map<String, String> respContent;
+                    Map<String, String> respContent = new HashMap<>();
                     try {
                         respContent = new Gson().fromJson(content, new TypeToken<Map<String, String>>() {
                         }.getType());
                     } catch (JsonSyntaxException e) {
-                        respContent = Map.of("text", "解析消息失败，请发送文本消息\nparse message failed, please send text message");
+                        respContent.put("text", "解析消息失败，请发送文本消息\nparse message failed, please send text message");
                     }
 
                     /**
@@ -62,7 +63,7 @@ public class Main {
                      * Check if the message type is text
                      */
                     if (!event.getEvent().getMessage().getMessageType().equals("text")) {
-                        respContent = Map.of("text", "解析消息失败，请发送文本消息\nparse message failed, please send text message");
+                        respContent.put("text", "解析消息失败，请发送文本消息\nparse message failed, please send text message");
                     }
 
                     /**
@@ -113,7 +114,8 @@ public class Main {
                             // 发起请求
                             ReplyMessageResp resp = client.im().message().reply(req);
                             if (resp.getCode() != 0) {
-                                System.out.println(String.format("logId: %s, error response: \n%s", resp.getRequestId(), Jsons.DEFAULT.toJson(resp.getError())));
+                                System.out.println(String.format("logId: %s, error response: \n%s", resp.getRequestId(),
+                                        Jsons.DEFAULT.toJson(resp.getError())));
                             }
                         } catch (Exception e) {
                             System.out.println(e.getMessage());
