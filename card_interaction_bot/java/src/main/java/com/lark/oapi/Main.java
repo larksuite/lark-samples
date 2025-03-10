@@ -2,6 +2,7 @@ package com.lark.oapi;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
@@ -32,7 +33,7 @@ public class Main {
     private static final String WELCOME_CARD_ID = System.getenv("WELCOME_CARD_ID");
     private static final String ALERT_CARD_ID = System.getenv("ALERT_CARD_ID");
     private static final String ALERT_RESOLVED_CARD_ID = System.getenv("ALERT_RESOLVED_CARD_ID");
-
+    private static final ZoneId SHANGHAI_ZONE_ID = ZoneId.of("Asia/Shanghai");
 
     /**
      * 创建 LarkClient 对象，用于请求OpenAPI。
@@ -106,7 +107,7 @@ public class Main {
                 .data(new MessageTemplateData.Builder().templateId(ALERT_CARD_ID)
                     .templateVariable(new HashMap<String, Object>() {
                         {
-                            put("alarm_time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                            put("alarm_time", LocalDateTime.now(SHANGHAI_ZONE_ID).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                         }
                     })
                     .build())
@@ -275,7 +276,7 @@ public class Main {
                                     {
                                         put("alarm_time", event.getEvent().getAction().getValue().get("time"));
                                         put("open_id", openID);
-                                        put("complete_time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                                        put("complete_time", LocalDateTime.now(SHANGHAI_ZONE_ID).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                                         put("notes", notes);
                                     }
                                 }).build());
