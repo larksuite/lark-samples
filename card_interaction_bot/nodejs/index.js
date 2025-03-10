@@ -70,15 +70,19 @@ async function sendAlarmCard(receiveIdType, receiveId) {
         data: {
           template_id: ALERT_CARD_ID,
           template_variable: {
-            alarm_time: new Date().toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
-            }),
+            alarm_time: `${new Date().toLocaleString(
+              'zh-CN',
+              {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+              },
+              { timeZone: 'Asia/Shanghai' }
+            )} (UTC+8)`,
           },
         },
       }),
@@ -115,7 +119,7 @@ const eventDispatcher = new Lark.EventDispatcher({}).register({
     } = operator;
 
     console.log('Received bot menu event:', data);
-    
+
     /**
      * 通过菜单 event_key 区分不同菜单。 你可以在开发者后台配置菜单的event_key
      * Use event_key to distinguish different menus. You can configure the event_key of the menu in the developer console.
@@ -133,7 +137,9 @@ const eventDispatcher = new Lark.EventDispatcher({}).register({
   'im.message.receive_v1': async (data) => {
     const {
       message: { chat_type, chat_id },
-      sender: { sender_id: { open_id } },
+      sender: {
+        sender_id: { open_id },
+      },
     } = data;
     console.log('Received message:', data);
 
@@ -198,15 +204,19 @@ const eventDispatcher = new Lark.EventDispatcher({}).register({
             template_variable: {
               alarm_time: value.time,
               open_id: open_id,
-              complete_time: new Date().toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-              }),
+              complete_time: `${new Date().toLocaleString(
+                'zh-CN',
+                {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
+                },
+                { timeZone: 'Asia/Shanghai' }
+              )} (UTC+8)`,
               notes: notes,
             },
           },

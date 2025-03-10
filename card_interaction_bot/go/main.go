@@ -16,6 +16,8 @@ import (
 	larkws "github.com/larksuite/oapi-sdk-go/v3/ws"
 )
 
+var cstZone *time.Location = time.FixedZone("CST", 8*3600) // 东八区（+8小时）
+
 /**
  * 发送欢迎卡片
  * Construct a welcome card
@@ -42,9 +44,9 @@ func sendWelcomeCard(client *lark.Client, openID string) {
 	}
 
 	/* 使用发送OpenAPI发送通知卡片，你可以在API接口中打开 API 调试台，快速复制调用示例代码
- 	* Use send OpenAPI to send notice card. You can open the API debugging console in the API interface and quickly copy the sample code for API calls.
- 	* https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/create
- 	*/
+	* Use send OpenAPI to send notice card. You can open the API debugging console in the API interface and quickly copy the sample code for API calls.
+	* https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/create
+	 */
 	resp, err := client.Im.Message.Create(context.Background(), larkim.NewCreateMessageReqBuilder().
 		ReceiveIdType("open_id").
 		Body(larkim.NewCreateMessageReqBodyBuilder().
@@ -79,10 +81,12 @@ func sendAlarmCard(client *lark.Client, receiveIdType string, receiveId string) 
 		Data: &callback.TemplateCard{
 			TemplateID: ALERT_CARD_ID,
 			TemplateVariable: map[string]interface{}{
-				"alarm_time": time.Now().Format("2006-01-02 15:04:05"),
+				"alarm_time": time.Now().In(cstZone).Format("2006-01-02 15:04:05 (UTC+8)"),
 			},
 		},
 	}
+
+	fmt.Println(time.Now().In(cstZone).Format("2006-01-02 15:04:05 (UTC+8)"))
 
 	content, err := json.Marshal(card)
 	if err != nil {
@@ -93,7 +97,7 @@ func sendAlarmCard(client *lark.Client, receiveIdType string, receiveId string) 
 	* 使用发送OpenAPI发送告警卡片，根据传入的receiveIdType不同，可发送到用户单聊或群聊中。你可以在API接口中打开 API 调试台，快速复制调用示例代码
 	* Use the Send OpenAPI to send an alarm card. Depending on the value of the incoming receiveIdType, it can be sent to an individual user chat or a group chat. You can open the API debugging console in the API interface and quickly copy the sample code for API calls.
 	* https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/create
-	*/
+	 */
 
 	resp, err := client.Im.Message.Create(context.Background(), larkim.NewCreateMessageReqBuilder().
 		ReceiveIdType(receiveIdType).
@@ -132,12 +136,12 @@ func main() {
 	 */
 	eventHandler := dispatcher.NewEventDispatcher("", "").
 		/**
-	 	* 处理用户进入机器人单聊事件
-		* handle user enter bot single chat event
-		* https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/chat-access_event/events/bot_p2p_chat_entered
+		 	* 处理用户进入机器人单聊事件
+			* handle user enter bot single chat event
+			* https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/chat-access_event/events/bot_p2p_chat_entered
 		*/
 		OnP2ChatAccessEventBotP2pChatEnteredV1(func(ctx context.Context, event *larkim.P2ChatAccessEventBotP2pChatEnteredV1) error {
-			
+
 			fmt.Printf("[ OnP2ChatAccessEventBotP2pChatEnteredV1 access ], data: %s\n", larkcore.Prettify(event))
 			sendWelcomeCard(client, *event.Event.OperatorId.OpenId)
 			return nil
@@ -146,9 +150,9 @@ func main() {
 		* 处理用户点击机器人菜单事件
 		* handle user click bot menu event
 		* https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/application-v6/bot/events/menu
-		*/
+		 */
 		OnP2BotMenuV6(func(ctx context.Context, event *larkapplication.P2BotMenuV6) error {
-			 /**
+			/**
 			 * 通过菜单 event_key 区分不同菜单。 你可以在开发者后台配置菜单的event_key
 			 * Use event_key to distinguish different menus. You can configure the event_key
 			 * of the menu in the developer console.
@@ -186,7 +190,7 @@ func main() {
 			 * Here, handle the situation where the user clicks the "Initiate Alarm" button on the welcome card.
 			 */
 			if event.Event.Action.Value["action"] == "send_alarm" {
-				 /*
+				/*
 				 * 响应回调请求，保持卡片原内容不变
 				 * Respond to the callback request and keep the original content of the card unchanged.
 				 */
@@ -194,10 +198,10 @@ func main() {
 				return &callback.CardActionTriggerResponse{}, nil
 			}
 			/**
-			* 通过 action 区分不同按钮， 你可以在卡片搭建工具配置按钮的action。此处处理用户点击了告警卡片中的已处理按钮
-	    	* Use action to distinguish different buttons. You can configure the action of the button in the card building tool.
-			 * Here, handle the scenario where the user clicks the "Mark as resolved" button on the alarm card.
-			 */
+					* 通过 action 区分不同按钮， 你可以在卡片搭建工具配置按钮的action。此处处理用户点击了告警卡片中的已处理按钮
+			    	* Use action to distinguish different buttons. You can configure the action of the button in the card building tool.
+					 * Here, handle the scenario where the user clicks the "Mark as resolved" button on the alarm card.
+			*/
 			if event.Event.Action.Value["action"] == "complete_alarm" {
 				/*
 				 * 读取告警卡片中用户填写的备注文本信息
@@ -230,7 +234,7 @@ func main() {
 							TemplateVariable: map[string]interface{}{
 								"alarm_time":    event.Event.Action.Value["time"],
 								"open_id":       event.Event.Operator.OpenID,
-								"complete_time": time.Now().Format("2006-01-02 15:04:05"),
+								"complete_time": time.Now().In(cstZone).Format("2006-01-02 15:04:05 (UTC+8)"),
 								"notes":         notes,
 							},
 						},
