@@ -1,7 +1,6 @@
 import os
 import json
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone, timedelta
 
 import lark_oapi as lark
 from lark_oapi.api.im.v1 import *
@@ -70,7 +69,7 @@ def send_alarm_card(receive_id_type, receive_id):
             "data": {
                 "template_id": ALERT_CARD_ID,
                 "template_variable": {
-                    "alarm_time": datetime.now(ZoneInfo('Asia/Shanghai')).strftime("%Y-%m-%d %H:%M:%S (UTC+8)"),
+                    "alarm_time": datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S (UTC+8)"),
                 },
             },
         }
@@ -158,7 +157,7 @@ def do_p2_card_action_trigger(data: P2CardActionTrigger) -> P2CardActionTriggerR
                     "template_variable": {
                         "alarm_time": action.value["time"],
                         "open_id": open_id,
-                        "complete_time": datetime.now(ZoneInfo('Asia/Shanghai')).strftime("%Y-%m-%d %H:%M:%S (UTC+8)"),
+                        "complete_time": datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S (UTC+8)"),
                         "notes": notes,
                     },
                 },
