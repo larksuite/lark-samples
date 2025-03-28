@@ -1,0 +1,16 @@
+{
+    "name": "Lark Go Samples Dev Environment",
+    "image": "mcr.microsoft.com/devcontainers/go:1.24",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "streetsidesoftware.code-spell-checker"
+            ],
+            "settings": {
+                "go.toolsManagement.checkForUpdates": "local",
+                "go.useLanguageServer": true
+            }
+        }
+    }
+} 
