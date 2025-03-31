@@ -1,0 +1,16 @@
+{
+    "name": "Lark Java Samples Dev Environment",
+    "image": "mcr.microsoft.com/devcontainers/java:17", 
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "redhat.java",
+                "vscjava.vscode-java-pack",
+                "streetsidesoftware.code-spell-checker"
+            ],
+            "settings": {
+                "java.jdt.ls.java.home": "/usr/local/openjdk-17"
+            }
+        }
+    }
+} 
