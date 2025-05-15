@@ -1,6 +1,6 @@
 module main
 
-go 1.22.5
+go 1.22
 
 require github.com/larksuite/oapi-sdk-go/v3 v3.4.9
 
