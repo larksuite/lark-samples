@@ -1,2 +1,14 @@
 .idea/*
+
+node_modules
+.env
+dist
+.env*.local
+
+__pycache__
+
 .DS_Store
+.mvn
+.venv
+
+target
