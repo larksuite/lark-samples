@@ -38,11 +38,11 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> None:
         # 使用OpenAPI发送消息
         # Use send OpenAPI to send messages
         # https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/create
-        response = client.im.v1.chat.create(request)
+        response = client.im.v1.message.create(request)
 
         if not response.success():
             raise Exception(
-                f"client.im.v1.chat.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}"
+                f"client.im.v1.message.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}"
             )
     else:
         request: ReplyMessageRequest = (
