@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>飞书/Lark智能助手 - 登录成功</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+          'Helvetica Neue', Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 60px 40px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 90%;
+        position: relative;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .success-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 30px;
+        position: relative;
+        animation: bounceIn 0.8s ease-out 0.2s both;
+      }
+
+      @keyframes bounceIn {
+        0% {
+          opacity: 0;
+          transform: scale(0.3);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+        70% {
+          transform: scale(0.9);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .checkmark {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4caf50, #45a049);
+        position: relative;
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+      }
+
+      .checkmark::after {
+        content: '';
+        position: absolute;
+        left: 28px;
+        top: 18px;
+        width: 12px;
+        height: 25px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        transform: rotate(45deg);
+        animation: checkmarkDraw 0.3s ease-out 0.6s both;
+      }
+
+      @keyframes checkmarkDraw {
+        from {
+          opacity: 0;
+          transform: rotate(45deg) scale(0);
+        }
+        to {
+          opacity: 1;
+          transform: rotate(45deg) scale(1);
+        }
+      }
+
+      .title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+        animation: fadeIn 0.8s ease-out 0.4s both;
+      }
+
+      .subtitle {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 30px;
+        line-height: 1.5;
+        animation: fadeIn 0.8s ease-out 0.6s both;
+      }
+
+      .countdown {
+        font-size: 18px;
+        color: #667eea;
+        font-weight: 500;
+        animation: fadeIn 0.8s ease-out 0.8s both;
+      }
+
+      .countdown .number {
+        display: inline-block;
+        min-width: 20px;
+        font-weight: 700;
+        color: #764ba2;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .floating-elements {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .floating-element {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .floating-element:nth-child(1) {
+        width: 60px;
+        height: 60px;
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+
+      .floating-element:nth-child(2) {
+        width: 40px;
+        height: 40px;
+        top: 20%;
+        right: 15%;
+        animation-delay: 2s;
+      }
+
+      .floating-element:nth-child(3) {
+        width: 80px;
+        height: 80px;
+        bottom: 15%;
+        left: 20%;
+        animation-delay: 4s;
+      }
+
+      .floating-element:nth-child(4) {
+        width: 30px;
+        height: 30px;
+        bottom: 25%;
+        right: 10%;
+        animation-delay: 1s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 0.7;
+        }
+        50% {
+          transform: translateY(-20px) rotate(180deg);
+          opacity: 0.3;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 40px 20px;
+          margin: 20px;
+        }
+
+        .title {
+          font-size: 24px;
+        }
+
+        .subtitle {
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="floating-elements">
+      <div class="floating-element"></div>
+      <div class="floating-element"></div>
+      <div class="floating-element"></div>
+      <div class="floating-element"></div>
+    </div>
+
+    <div class="container">
+      <div class="success-icon">
+        <div class="checkmark"></div>
+      </div>
+
+      <h1 class="title">登录成功！</h1>
+      <p class="subtitle">
+        恭喜你成功接入飞书/Lark智能助手<br />
+        窗口即将自动关闭
+      </p>
+
+      <div class="countdown"><span class="number" id="countdown">3</span> 秒后自动关闭</div>
+    </div>
+
+    <script>
+      let countdown = 3;
+      const countdownElement = document.getElementById('countdown');
+
+      const timer = setInterval(() => {
+        countdown--;
+        countdownElement.textContent = countdown;
+
+        if (countdown <= 0) {
+          clearInterval(timer);
+          window.close();
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>
