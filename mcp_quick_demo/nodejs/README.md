@@ -38,7 +38,7 @@ This project showcases two different Node.js implementations for integrating wit
 
    ```bash
    git clone https://github.com/larksuite/lark-samples
-   cd mcp-quick-demo/node
+   cd mcp-quick-demo/nodejs
    ```
 
 2. **Install dependencies | 安装依赖**

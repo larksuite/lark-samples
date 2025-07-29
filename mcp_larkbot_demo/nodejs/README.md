@@ -62,7 +62,7 @@ graph TB
 
 ```bash
 git clone https://github.com/larksuite/lark-samples
-cd mcp-larkbot-demo/node
+cd mcp-larkbot-demo/nodejs
 ```
 
 ### 2. 安装依赖 / Install Dependencies
