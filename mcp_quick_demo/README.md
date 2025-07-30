@@ -11,7 +11,7 @@ A comprehensive collection of Model Context Protocol (MCP) integration examples 
 ## 📁 Project Structure | 项目结构
 
 ```
-mcp-quick-demo/
+mcp_quick_demo/
 ├── go/                     # Go implementation | Go 实现
 │   ├── main.go
 │   ├── app/

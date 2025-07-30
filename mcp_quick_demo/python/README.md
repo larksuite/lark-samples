@@ -36,7 +36,7 @@ This project provides two different Python implementations for integrating with 
 
     ```bash
     git clone https://github.com/larksuite/lark-samples
-    cd mcp-quick-demo/python
+    cd mcp_quick_demo/python
     ```
 
 2.  **Set up Python environment | 设置 Python 环境**
