@@ -22,7 +22,7 @@ This project demonstrates how to integrate with the Model Context Protocol (MCP)
 
    ```bash
    git clone https://github.com/larksuite/lark-samples
-   cd mcp-quick-demo/java
+   cd mcp_quick_demo/java
    ```
 
 2. **Set up environment variables | 设置环境变量**

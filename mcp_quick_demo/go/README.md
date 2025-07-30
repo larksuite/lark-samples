@@ -21,7 +21,7 @@ This project demonstrates how to integrate with the Model Context Protocol (MCP)
 
    ```bash
    git clone https://github.com/larksuite/lark-samples
-   cd mcp-quick-demo/go
+   cd mcp_quick_demo/go
    ```
 
 2. **Install dependencies | 安装依赖**
