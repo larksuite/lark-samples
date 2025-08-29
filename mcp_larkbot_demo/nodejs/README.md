@@ -9,6 +9,8 @@
 
 This is an intelligent assistant bot demo project based on Lark Open Platform and AI models, integrating MCP (Model Context Protocol) to provide users with intelligent conversation and tool calling capabilities.
 
+⚠️ 注意：Demo 仅用于学习和功能演示，未考虑存储、部署、安全、日志等，请勿直接用于生产环境！若在生产环境使用，请自行承担风险！
+
 ## 项目架构 / Project Architecture
 
 ```

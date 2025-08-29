@@ -21,7 +21,14 @@ import { ChatController } from './controller/chat';
 import { LarkChatProvider, LarkWebhookChatProvider } from './provider/lark';
 import path from 'path';
 
+console.warn('⚠️ 注意：Demo 仅用于学习和功能演示，未考虑存储、部署、安全、日志等，请勿直接用于生产环境！若在生产环境使用，请自行承担风险！');
+console.warn(
+  'Note: This Demo is for demonstration purposes only. Do not use it in production environments.'
+);
+
 const mode = process.argv[2] === 'webhook' ? 'webhook' : 'websocket';
+
+console.log('运行模式:', mode);
 console.log('Run With Mode:', mode);
 // 初始化
 // Initialize
