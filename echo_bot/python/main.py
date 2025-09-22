@@ -17,7 +17,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> None:
         {
             "text": "收到你发送的消息："
             + res_content
-            + "\nReceived messages:"
+            + "\nReceived messages_1:"
             + res_content
         }
     )
