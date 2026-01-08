@@ -14,6 +14,9 @@ import time
 from typing import Dict
 import os
 import uuid
+import threading
+from html import unescape
+import requests
 
 # 每个运行实例的唯一ID（用于识别是否为旧部署）
 INSTANCE_ID = os.getenv("INSTANCE_ID", str(uuid.uuid4()))
@@ -22,6 +25,10 @@ INSTANCE_ID = os.getenv("INSTANCE_ID", str(uuid.uuid4()))
 PROCESSED_MESSAGE_IDS: Dict[str, float] = {}
 DUPLICATE_EXPIRE_SECONDS = 300  # 5分钟过期
 # ====================================================================================
+
+# ====================== 异步标题获取和卡片更新配置 ======================
+TITLE_UPDATE_CACHE: Dict[str, str] = {}  # message_id -> title
+# =========================================================================
 
 # ====================== 飞书配置项（无需修改） ======================
 APP_ID = "cli_a9d5811ad8b89cb5"
@@ -42,6 +49,143 @@ def clean_expired_message_ids():
         del PROCESSED_MESSAGE_IDS[mid]
     if expired_ids:
         print(f"ℹ️ 清理过期消息ID：{len(expired_ids)}个")
+
+
+def get_page_title(url: str) -> str:
+    """获取网页标题（带重试和超时机制）"""
+    if not url:
+        return ""
+    try:
+        r = requests.get(url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+        if r.status_code != 200 or not r.text:
+            return ""
+        m = re.search(r"<title[^>]*>(.*?)</title>", r.text, re.I | re.S)
+        if not m:
+            return ""
+        title = m.group(1).strip()
+        title = re.sub(r"\s+", " ", title)
+        title = unescape(title)
+        if len(title) > 100:
+            title = title[:100] + "..."
+        return title
+    except Exception as e:
+        print(f"⚠️ 获取标题异常：{e}")
+        return ""
+
+
+def async_update_card_title(open_id: str, message_id: str, filtered_url: str, title_initial: str):
+    """异步线程：获取标题并更新卡片内容"""
+    try:
+        # 给一点时间让客户端先显示初始卡片
+        time.sleep(0.5)
+        
+        # 获取标题
+        title = get_page_title(filtered_url)
+        if not title:
+            print(f"⚠️ 未能获取标题，使用初始值：{filtered_url}")
+            return
+        
+        print(f"✅ 获取到标题：{title}，准备更新卡片 {message_id}")
+        
+        # 构造更新后的卡片（只更新 markdown 中的标题部分）
+        card = {
+            "schema": "2.0",
+            "config": {
+                "update_multi": True,
+                "style": {
+                    "text_size": {
+                        "normal_v2": {
+                            "default": "normal",
+                            "pc": "normal",
+                            "mobile": "heading",
+                        }
+                    }
+                },
+            },
+            "body": {
+                "direction": "vertical",
+                "horizontal_spacing": "8px",
+                "vertical_spacing": "8px",
+                "horizontal_align": "left",
+                "vertical_align": "top",
+                "padding": "0px 0px 12px 0px",
+                "elements": [
+                    {
+                        "tag": "interactive_container",
+                        "width": "fill",
+                        "height": "auto",
+                        "corner_radius": "",
+                        "elements": [
+                            {
+                                "tag": "div",
+                                "text": {
+                                    "tag": "plain_text",
+                                    "content": "处理成功",
+                                    "text_size": "heading",
+                                    "text_align": "left",
+                                    "text_color": "green",
+                                },
+                                "icon": {
+                                    "tag": "standard_icon",
+                                    "token": "chat-done_outlined",
+                                    "color": "green",
+                                },
+                                "margin": "4px 0px 4px 12px",
+                                "element_id": "Top_title",
+                            },
+                            {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}, "margin": "4px 0px 4px 12px"}
+                        ],
+                        "has_border": False,
+                        "background_style": "green-100",
+                        "behaviors": [
+                            {"type": "template_open_url", "multi_url": filtered_url}
+                        ],
+                        "padding": "0px 4px 0px 4px",
+                        "direction": "vertical",
+                        "horizontal_spacing": "8px",
+                        "vertical_spacing": "4px",
+                        "horizontal_align": "left",
+                        "vertical_align": "top",
+                        "margin": "0px 0px 0px 0px",
+                        "hover_tips": {"tag": "plain_text", "content": "点击打开分享内容"},
+                    },
+                    {
+                        "tag": "markdown",
+                        "content": (
+                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person> ! 您分享的《<link url='{filtered_url}' pc_url='' ios_url='' android_url=''>{title}</link>》已成功收入文案库！"
+                        ),
+                        "text_align": "left",
+                        "text_size": "normal_v2",
+                        "margin": "4px 0px 0px 12px",
+                    },
+                ],
+            },
+        }
+        
+        # 调用 message.update API 更新卡片
+        client = lark.Client.builder()\
+            .app_id(APP_ID)\
+            .app_secret(APP_SECRET)\
+            .build()
+        
+        content = json.dumps(card)
+        request = UpdateMessageRequest.builder()\
+            .message_id(message_id)\
+            .request_body(UpdateMessageRequestBody.builder()
+                         .content(content)
+                         .build())\
+            .build()
+        
+        resp = client.im.v1.message.update(request)
+        if getattr(resp, 'success', None) and resp.success():
+            print(f"✅ 已更新卡片标题（message_id={message_id}）")
+        else:
+            print(f"❌ 更新卡片失败：code={getattr(resp,'code',None)}, msg={getattr(resp,'msg',None)}")
+    
+    except Exception as e:
+        print(f"❌ 异步更新卡片异常：{str(e)}")
+        traceback.print_exc()
+
 
 
 def extract_url_from_text(text: str) -> str:
@@ -253,10 +397,8 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 if extracted_url:
                     filtered_url = filter_url_params(extracted_url)
                     platform = judge_platform(filtered_url)
-                    # 尝试获取标题用于卡片展示
-                    title = get_page_title(filtered_url)
-                    if not title:
-                        title = "(未获取到标题)"
+                    # 初始标题设为 URL，后续异步更新为真实标题
+                    title = filtered_url
                     res_content = f"✅ 卡片消息处理完成\n原始链接：{extracted_url}\n过滤后：{filtered_url}\n平台：{platform}\n分享人：{user_name}"
                     wrote_to_base = add_data_to_base(filtered_url, platform, open_id, user_name)
                 else:
@@ -281,28 +423,6 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
             .app_secret(APP_SECRET)\
             .build()
 
-        # Helper: get page title (robust, timeout, HTML-unescape)
-        def get_page_title(url: str) -> str:
-            if not url:
-                return ""
-            try:
-                import requests
-                from html import unescape
-                r = requests.get(url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
-                if r.status_code != 200 or not r.text:
-                    return ""
-                m = re.search(r"<title[^>]*>(.*?)</title>", r.text, re.I | re.S)
-                if not m:
-                    return ""
-                title = m.group(1).strip()
-                title = re.sub(r"\s+", " ", title)
-                title = unescape(title)
-                if len(title) > 200:
-                    title = title[:200] + "..."
-                return title
-            except Exception as e:
-                print(f"⚠️ 获取标题异常：{e}")
-                return ""
 
         # 使用用户提供的 2.0 schema 卡片模板
         card = {
@@ -369,7 +489,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                     {
                         "tag": "markdown",
                         "content": (
-                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person> ！ 您分享的《<link url='{filtered_url}' pc_url='' ios_url='' android_url=''>{title}</link>》已成功收入文案库！"
+                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person> ! 您分享的<link url='{filtered_url}' pc_url='' ios_url='' android_url=''>《{title}》</link>已成功收入文案库！"
                         ),
                         "text_align": "left",
                         "text_size": "normal_v2",
@@ -382,6 +502,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
 
         # 发送时直接传入完整 card 对象（schema 2.0）
         content = json.dumps(card)
+        sent_message_id = None
         if data.event.message.chat_type == "p2p":
             # 对私聊使用 open_id 发送，兼容 Lark OpenAPI 的推荐方式
             request = CreateMessageRequest.builder()\
@@ -394,7 +515,16 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 .build()
             resp = client.im.v1.message.create(request)
             if getattr(resp, 'success', None) and resp.success():
+                sent_message_id = resp.data.message_id if hasattr(resp, 'data') and hasattr(resp.data, 'message_id') else None
                 print("✅ 已发送卡片回复（私聊）")
+                # 启动异步线程获取标题并更新卡片
+                if sent_message_id and msg_type == "interactive" and not action_payload:
+                    thread = threading.Thread(
+                        target=async_update_card_title,
+                        args=(open_id, sent_message_id, filtered_url, title),
+                        daemon=True
+                    )
+                    thread.start()
             else:
                 print(f"❌ 发送卡片（私聊）返回错误: code={getattr(resp,'code',None)}, msg={getattr(resp,'msg',None)}")
         else:
@@ -407,7 +537,16 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 .build()
             resp = client.im.v1.message.reply(request)
             if getattr(resp, 'success', None) and resp.success():
+                sent_message_id = resp.data.message_id if hasattr(resp, 'data') and hasattr(resp.data, 'message_id') else None
                 print("✅ 已发送卡片回复（群聊）")
+                # 启动异步线程获取标题并更新卡片
+                if sent_message_id and msg_type == "interactive" and not action_payload:
+                    thread = threading.Thread(
+                        target=async_update_card_title,
+                        args=(open_id, sent_message_id, filtered_url, title),
+                        daemon=True
+                    )
+                    thread.start()
             else:
                 print(f"❌ 发送卡片（群聊）返回错误: code={getattr(resp,'code',None)}, msg={getattr(resp,'msg',None)}")
 
