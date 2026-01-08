@@ -1,7 +1,7 @@
 nohup: ignoring input
 🚀 飞书消息处理服务启动（lark-oapi >=1.5.2 适配版）
 📋 多维表格配置：APP_TOKEN=ETbFbDz36adFvmsYe0IcRkU3nId, TABLE_ID=tblUMI69DXHKNTYv
-🔢 实例ID：0656ec8c-2b84-464b-9be2-6b2c093480a8
-[Lark] [2026-01-08 12:38:55,165] [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7592969320483556570&access_key=156d57645198199c57cf3d72dda94e2e&service_id=33554678&ticket=89e26b29-68f4-42cb-91f6-5eaeb04fe431 [conn_id=7592969320483556570]
-[Lark] [2026-01-08 12:38:55,166] [DEBUG] ping success [conn_id=7592969320483556570]
-[Lark] [2026-01-08 12:38:55,253] [DEBUG] receive pong [conn_id=7592969320483556570]
+🔢 实例ID：36b27dab-e5fa-43f7-b3fc-6005c433e72f
+[Lark] [2026-01-08 12:45:03,171] [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7592970898811653303&access_key=c03416c572e68c00933b6175a8c4749c&service_id=33554678&ticket=eed42db3-5d68-40a4-9c89-9c90800711c9 [conn_id=7592970898811653303]
+[Lark] [2026-01-08 12:45:03,171] [DEBUG] ping success [conn_id=7592970898811653303]
+[Lark] [2026-01-08 12:45:03,252] [DEBUG] receive pong [conn_id=7592970898811653303]

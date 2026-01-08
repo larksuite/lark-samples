@@ -14,9 +14,6 @@ import time
 from typing import Dict
 import os
 import uuid
-import threading
-from html import unescape
-import requests
 
 # 每个运行实例的唯一ID（用于识别是否为旧部署）
 INSTANCE_ID = os.getenv("INSTANCE_ID", str(uuid.uuid4()))
@@ -484,7 +481,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                     {
                         "tag": "markdown",
                         "content": (
-                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person>  您分享的《<link url='{filtered_url}' pc_url='' ios_url='' android_url=''>{filtered_url}</link>》已成功收入文案库！"
+                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person>  您分享的《[{filtered_url}]({filtered_url})》已成功收入文案库！"
                         ),
                         "text_align": "left",
                         "text_size": "normal_v2",
@@ -497,7 +494,6 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
 
         # 发送时直接传入完整 card 对象（schema 2.0）
         content = json.dumps(card)
-        sent_message_id = None
         if data.event.message.chat_type == "p2p":
             # 对私聊使用 open_id 发送，兼容 Lark OpenAPI 的推荐方式
             request = CreateMessageRequest.builder()\
@@ -510,16 +506,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 .build()
             resp = client.im.v1.message.create(request)
             if getattr(resp, 'success', None) and resp.success():
-                sent_message_id = resp.data.message_id if hasattr(resp, 'data') and hasattr(resp.data, 'message_id') else None
                 print("✅ 已发送卡片回复（私聊）")
-                # 启动异步线程获取标题并更新卡片
-                if sent_message_id and msg_type == "interactive" and not action_payload:
-                    thread = threading.Thread(
-                        target=async_update_card_title,
-                        args=(open_id, sent_message_id, filtered_url),
-                        daemon=True
-                    )
-                    thread.start()
             else:
                 print(f"❌ 发送卡片（私聊）返回错误: code={getattr(resp,'code',None)}, msg={getattr(resp,'msg',None)}")
         else:
@@ -532,16 +519,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 .build()
             resp = client.im.v1.message.reply(request)
             if getattr(resp, 'success', None) and resp.success():
-                sent_message_id = resp.data.message_id if hasattr(resp, 'data') and hasattr(resp.data, 'message_id') else None
                 print("✅ 已发送卡片回复（群聊）")
-                # 启动异步线程获取标题并更新卡片
-                if sent_message_id and msg_type == "interactive" and not action_payload:
-                    thread = threading.Thread(
-                        target=async_update_card_title,
-                        args=(open_id, sent_message_id, filtered_url),
-                        daemon=True
-                    )
-                    thread.start()
             else:
                 print(f"❌ 发送卡片（群聊）返回错误: code={getattr(resp,'code',None)}, msg={getattr(resp,'msg',None)}")
 
