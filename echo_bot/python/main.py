@@ -273,25 +273,86 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
         else:
             res_content = f"⚠️ 暂不支持 {msg_type} 类型消息"
 
-        # 4. 发送回复消息（使用简洁的卡片格式，显示链接信息）
+        # 4. 发送回复消息
         client = lark.Client.builder()\
             .app_id(APP_ID)\
             .app_secret(APP_SECRET)\
             .build()
 
-        # 构造卡片：展示链接信息
-        # 使用 markdown 组件和简单的 div 元素，避免复杂的交互容器
+        # 构造卡片：展示链接信息和感谢用户（让客户端自动替换 URL 为标题）
         card = {
             "schema": "2.0",
-            "config": {"update_multi": True},
+            "config": {
+                "update_multi": True,
+                "style": {
+                    "text_size": {
+                        "normal_v2": {
+                            "default": "normal",
+                            "pc": "normal",
+                            "mobile": "heading",
+                        }
+                    }
+                },
+            },
             "body": {
+                "direction": "vertical",
+                "horizontal_spacing": "8px",
+                "vertical_spacing": "8px",
+                "horizontal_align": "left",
+                "vertical_align": "top",
+                "padding": "0px 0px 12px 0px",
                 "elements": [
                     {
+                        "tag": "interactive_container",
+                        "width": "fill",
+                        "height": "auto",
+                        "corner_radius": "",
+                        "elements": [
+                            {
+                                "tag": "div",
+                                "text": {
+                                    "tag": "plain_text",
+                                    "content": "处理成功",
+                                    "text_size": "heading",
+                                    "text_align": "left",
+                                    "text_color": "green",
+                                },
+                                "icon": {
+                                    "tag": "standard_icon",
+                                    "token": "chat-done_outlined",
+                                    "color": "green",
+                                },
+                                "margin": "4px 0px 4px 12px",
+                                "element_id": "Top_title",
+                            },
+                            {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}, "margin": "4px 0px 4px 12px"}
+                        ],
+                        "has_border": False,
+                        "background_style": "green-100",
+                        "behaviors": [
+                            {"type": "template_open_url", "multi_url": filtered_url}
+                        ],
+                        "padding": "0px 4px 0px 4px",
+                        "direction": "vertical",
+                        "horizontal_spacing": "8px",
+                        "vertical_spacing": "4px",
+                        "horizontal_align": "left",
+                        "vertical_align": "top",
+                        "margin": "0px 0px 0px 0px",
+                        "hover_tips": {"tag": "plain_text", "content": "点击打开分享内容"},
+                    },
+                    {
                         "tag": "markdown",
-                        "content": f"✅ **已成功处理**\n\n<link url='{filtered_url}'>{filtered_url}</link>\n\n平台：{platform} | 分享人：{user_name}",
-                    }
-                ]
-            }
+                        "content": (
+                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person> ! 您分享的《<link url='{filtered_url}' pc_url='' ios_url='' android_url=''>{filtered_url}</link>》已成功收入文案库！"
+                        ),
+                        "text_align": "left",
+                        "text_size": "normal_v2",
+                        "margin": "4px 0px 0px 12px",
+                    },
+
+                ],
+            },
         }
 
         # 发送时直接传入完整 card 对象（schema 2.0）
