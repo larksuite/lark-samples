@@ -272,52 +272,84 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
             .app_secret(APP_SECRET)\
             .build()
 
-        # 构造卡片消息
+        # 使用用户提供的 2.0 schema 卡片模板
         card = {
-            "card": {
-                "config": {"wide_screen_mode": True},
-                "header": {
-                    "title": {"tag": "plain_text", "content": "处理结果"},
-                    "template": "green"
+            "schema": "2.0",
+            "config": {
+                "update_multi": True,
+                "style": {
+                    "text_size": {
+                        "normal_v2": {
+                            "default": "normal",
+                            "pc": "normal",
+                            "mobile": "heading",
+                        }
+                    }
                 },
+            },
+            "body": {
+                "direction": "vertical",
+                "horizontal_spacing": "8px",
+                "vertical_spacing": "8px",
+                "horizontal_align": "left",
+                "vertical_align": "top",
+                "padding": "0px 0px 12px 0px",
                 "elements": [
                     {
-                        "tag": "div",
-                        "text": {
-                            "tag": "lark_md",
-                            "content": (
-                                f"**提取链接**：{extracted_url}\n\n"
-                                f"**过滤后**：{filtered_url}\n\n"
-                                f"**平台**：{platform}\n\n"
-                                f"**分享人**：{user_name}"
-                            )
-                        }
+                        "tag": "interactive_container",
+                        "width": "fill",
+                        "height": "auto",
+                        "corner_radius": "",
+                        "elements": [
+                            {
+                                "tag": "div",
+                                "text": {
+                                    "tag": "plain_text",
+                                    "content": "处理成功",
+                                    "text_size": "heading",
+                                    "text_align": "left",
+                                    "text_color": "green",
+                                },
+                                "icon": {
+                                    "tag": "standard_icon",
+                                    "token": "chat-done_outlined",
+                                    "color": "green",
+                                },
+                                "margin": "4px 0px 4px 12px",
+                                "element_id": "Top_title",
+                            }
+                        ],
+                        "has_border": False,
+                        "background_style": "green-100",
+                        "behaviors": [
+                            {"type": "template_open_url", "multi_url": filtered_url}
+                        ],
+                        "padding": "0px 4px 0px 4px",
+                        "direction": "vertical",
+                        "horizontal_spacing": "8px",
+                        "vertical_spacing": "4px",
+                        "horizontal_align": "left",
+                        "vertical_align": "top",
+                        "margin": "0px 0px 0px 0px",
+                        "hover_tips": {"tag": "plain_text", "content": "点击打开分享内容"},
                     },
                     {
-                        "tag": "action",
-                        "actions": [
-                            {
-                                "tag": "button",
-                                "text": {"tag": "plain_text", "content": "打开链接"},
-                                "type": "primary",
-                                "url": filtered_url
-                            },
-                            {
-                                "tag": "button",
-                                "text": {"tag": "plain_text", "content": "标记已处理"},
-                                "type": "secondary",
-                                "value": json.dumps({"action": "mark_processed", "url": filtered_url})
-                            }
-                        ]
+                        "tag": "markdown",
+                        "content": (
+                            f"<person id='{open_id}' show_name=true show_avatar=true style='capsule'></person>"
+                            f"<link icon='chat_outlined' url='{filtered_url}' pc_url='' ios_url='' android_url=''>带图标的链接</link>"
+                        ),
+                        "text_align": "left",
+                        "text_size": "normal_v2",
+                        "margin": "4px 0px 0px 12px",
                     },
-                    {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}}
-                    
-                ]
-            }
+                    {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}},
+                ],
+            },
         }
 
-        # 有些接口期望直接传入 card 对象而非包含在外层的 {"card": {...}} 中
-        content = json.dumps(card["card"])
+        # 发送时直接传入完整 card 对象（schema 2.0）
+        content = json.dumps(card)
         if data.event.message.chat_type == "p2p":
             # 对私聊使用 open_id 发送，兼容 Lark OpenAPI 的推荐方式
             request = CreateMessageRequest.builder()\
