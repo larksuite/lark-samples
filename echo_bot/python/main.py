@@ -171,16 +171,47 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
         platform = "未知"
 
         if msg_type == "interactive":
-            # 处理卡片消息
-            card_link = content.get("card_link", {})
-            extracted_url = card_link.get("url", "")
-            if extracted_url:
-                filtered_url = filter_url_params(extracted_url)
-                platform = judge_platform(filtered_url)
-                res_content = f"✅ 卡片消息处理完成\n原始链接：{extracted_url}\n过滤后：{filtered_url}\n平台：{platform}\n分享人：{user_name}"
-                wrote_to_base = add_data_to_base(filtered_url, platform, open_id, user_name)
+            # 处理卡片消息或卡片交互回调（按钮点击）
+            # 某些交互回调的 payload 可能在 content 的 'action' / 'actions' / 'value' 字段中
+            # 优先识别交互回调
+            action_payload = None
+            if 'action' in content:
+                action_payload = content.get('action')
+            elif 'actions' in content:
+                action_payload = content.get('actions')
+            elif 'value' in content:
+                action_payload = content.get('value')
+
+            if action_payload:
+                # 解析可能为字符串的 payload
+                parsed_payload = None
+                try:
+                    if isinstance(action_payload, str):
+                        parsed_payload = json.loads(action_payload)
+                    else:
+                        parsed_payload = action_payload
+                except Exception:
+                    parsed_payload = action_payload
+
+                # 支持一个简单动作：{"action":"mark_processed","url":"..."}
+                if isinstance(parsed_payload, dict) and parsed_payload.get('action') == 'mark_processed':
+                    res_content = f"✅ 操作已执行：标记为已处理\n链接：{parsed_payload.get('url','')}"
+                    print(f"ℹ️ 收到标记处理交互，payload={parsed_payload}")
+                else:
+                    res_content = f"✅ 已收到卡片交互，payload={parsed_payload}"
+                    print(f"ℹ️ 收到未识别的交互，payload={parsed_payload}")
+
             else:
-                res_content = "⚠️ 卡片消息无有效链接"
+                # 原始卡片消息（带 card_link）
+                card_link = content.get("card_link", {})
+                extracted_url = card_link.get("url", "")
+                if extracted_url:
+                    filtered_url = filter_url_params(extracted_url)
+                    platform = judge_platform(filtered_url)
+                    res_content = f"✅ 卡片消息处理完成\n原始链接：{extracted_url}\n过滤后：{filtered_url}\n平台：{platform}\n分享人：{user_name}"
+                    wrote_to_base = add_data_to_base(filtered_url, platform, open_id, user_name)
+                else:
+                    res_content = "⚠️ 卡片消息无有效链接"
         elif msg_type == "text":
             # 处理文本消息
             text = content.get("text", "")
@@ -227,9 +258,15 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                         "actions": [
                             {
                                 "tag": "button",
-                                "text": {"tag": "plain_text", "content": "查看链接"},
+                                "text": {"tag": "plain_text", "content": "打开链接"},
                                 "type": "primary",
                                 "url": filtered_url
+                            },
+                            {
+                                "tag": "button",
+                                "text": {"tag": "plain_text", "content": "标记已处理"},
+                                "type": "secondary",
+                                "value": json.dumps({"action": "mark_processed", "url": filtered_url})
                             }
                         ]
                     }
