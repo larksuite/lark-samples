@@ -198,6 +198,8 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
 
     res_content = ""
     wrote_to_base = False
+    # 在函数开始处默认 title 为空，确保后续模板安全使用
+    title = ""
     try:
         # 2. 提取发送者信息+获取用户名（仅一次）
         sender = data.event.sender
@@ -221,6 +223,9 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 action_payload = content.get('actions')
             elif 'value' in content:
                 action_payload = content.get('value')
+
+            # 如果是原始卡片消息（没有交互 payload），尝试获取页面标题以在卡片中展示
+            title = ""
 
             if action_payload:
                 # 解析可能为字符串的 payload
@@ -248,6 +253,10 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 if extracted_url:
                     filtered_url = filter_url_params(extracted_url)
                     platform = judge_platform(filtered_url)
+                    # 尝试获取标题用于卡片展示
+                    title = get_page_title(filtered_url)
+                    if not title:
+                        title = "(未获取到标题)"
                     res_content = f"✅ 卡片消息处理完成\n原始链接：{extracted_url}\n过滤后：{filtered_url}\n平台：{platform}\n分享人：{user_name}"
                     wrote_to_base = add_data_to_base(filtered_url, platform, open_id, user_name)
                 else:
@@ -271,6 +280,29 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
             .app_id(APP_ID)\
             .app_secret(APP_SECRET)\
             .build()
+
+        # Helper: get page title (robust, timeout, HTML-unescape)
+        def get_page_title(url: str) -> str:
+            if not url:
+                return ""
+            try:
+                import requests
+                from html import unescape
+                r = requests.get(url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+                if r.status_code != 200 or not r.text:
+                    return ""
+                m = re.search(r"<title[^>]*>(.*?)</title>", r.text, re.I | re.S)
+                if not m:
+                    return ""
+                title = m.group(1).strip()
+                title = re.sub(r"\s+", " ", title)
+                title = unescape(title)
+                if len(title) > 200:
+                    title = title[:200] + "..."
+                return title
+            except Exception as e:
+                print(f"⚠️ 获取标题异常：{e}")
+                return ""
 
         # 使用用户提供的 2.0 schema 卡片模板
         card = {
@@ -317,7 +349,8 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                                 },
                                 "margin": "4px 0px 4px 12px",
                                 "element_id": "Top_title",
-                            }
+                            },
+                            {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}, "margin": "4px 0px 4px 12px"}
                         ],
                         "has_border": False,
                         "background_style": "green-100",
@@ -336,14 +369,13 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                     {
                         "tag": "markdown",
                         "content": (
-                            f"<person id='{open_id}' show_name=true show_avatar=true style='capsule'></person>"
-                            f"<link icon='chat_outlined' url='{filtered_url}' pc_url='' ios_url='' android_url=''>带图标的链接</link>"
+                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person> ！ 您分享的《<link url='{filtered_url}' pc_url='' ios_url='' android_url=''>{title}</link>》已成功收入文案库！"
                         ),
                         "text_align": "left",
                         "text_size": "normal_v2",
                         "margin": "4px 0px 0px 12px",
                     },
-                    {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}},
+
                 ],
             },
         }
