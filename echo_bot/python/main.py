@@ -95,11 +95,11 @@ def get_user_info(open_id: str) -> tuple:
         return "未知用户", open_id
 
 
-def add_data_to_base(url: str, platform: str, open_id: str, user_name: str):
-    """写入飞书多维表格（适配文本+创建人字段）"""
+def add_data_to_base(url: str, platform: str, open_id: str, user_name: str) -> bool:
+    """写入飞书多维表格（适配文本+创建人字段），返回是否写入成功"""
     if not url or platform == "未知" or not open_id:
         print("⚠️ 必要参数缺失，跳过写入")
-        return
+        return False
 
     client = lark.Client.builder()\
         .app_id(APP_ID)\
@@ -128,13 +128,16 @@ def add_data_to_base(url: str, platform: str, open_id: str, user_name: str):
         resp = client.bitable.v1.app_table_record.create(req)
         if resp.success():
             print(f"✅ 写入多维表格成功：URL={url}, 平台={platform}, 分享人={user_name}")
+            return True
         else:
             print(f"❌ 写入失败：code={resp.code}, msg={resp.msg}")
             if resp.code == 1254045:
                 print(f"⚠️ 排查：表格字段名是否为 url/平台/分享人")
+            return False
     except Exception as e:
         print(f"❌ 写入表格异常：{str(e)}")
         traceback.print_exc()
+        return False
 
 
 def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse:
@@ -148,12 +151,13 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
 
     if message_id in PROCESSED_MESSAGE_IDS:
         print(f"ℹ️ 消息ID {message_id} 已处理，跳过")
-        return lark.BaseResponse.builder().code(0).msg("success").build()
+        return lark.BaseResponse({"code": 0, "msg": "success"})
 
     PROCESSED_MESSAGE_IDS[message_id] = time.time()
     # ======================================================
 
     res_content = ""
+    wrote_to_base = False
     try:
         # 2. 提取发送者信息+获取用户名（仅一次）
         sender = data.event.sender
@@ -174,7 +178,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 filtered_url = filter_url_params(extracted_url)
                 platform = judge_platform(filtered_url)
                 res_content = f"✅ 卡片消息处理完成\n原始链接：{extracted_url}\n过滤后：{filtered_url}\n平台：{platform}\n分享人：{user_name}"
-                add_data_to_base(filtered_url, platform, open_id, user_name)
+                wrote_to_base = add_data_to_base(filtered_url, platform, open_id, user_name)
             else:
                 res_content = "⚠️ 卡片消息无有效链接"
         elif msg_type == "text":
@@ -185,7 +189,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                 filtered_url = filter_url_params(extracted_url)
                 platform = judge_platform(filtered_url)
                 res_content = f"✅ 文本消息处理完成\n提取链接：{extracted_url}\n过滤后：{filtered_url}\n平台：{platform}\n分享人：{user_name}"
-                add_data_to_base(filtered_url, platform, open_id, user_name)
+                wrote_to_base = add_data_to_base(filtered_url, platform, open_id, user_name)
             else:
                 res_content = "⚠️ 文本消息无有效URL"
         else:
@@ -197,37 +201,86 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
             .app_secret(APP_SECRET)\
             .build()
 
+        # 构造卡片消息
+        card = {
+            "card": {
+                "config": {"wide_screen_mode": True},
+                "header": {
+                    "title": {"tag": "plain_text", "content": "处理结果"},
+                    "template": "green"
+                },
+                "elements": [
+                    {
+                        "tag": "div",
+                        "text": {
+                            "tag": "lark_md",
+                            "content": (
+                                f"**提取链接**：{extracted_url}\n\n"
+                                f"**过滤后**：{filtered_url}\n\n"
+                                f"**平台**：{platform}\n\n"
+                                f"**分享人**：{user_name}"
+                            )
+                        }
+                    },
+                    {
+                        "tag": "action",
+                        "actions": [
+                            {
+                                "tag": "button",
+                                "text": {"tag": "plain_text", "content": "查看链接"},
+                                "type": "primary",
+                                "url": filtered_url
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        content = json.dumps(card)
+
         if data.event.message.chat_type == "p2p":
-            reply_req = CreateMessageRequest.builder()\
+            request = CreateMessageRequest.builder()\
                 .receive_id_type("chat_id")\
                 .request_body(CreateMessageRequestBody.builder()
                              .receive_id(data.event.message.chat_id)
-                             .msg_type("text")
-                             .content(json.dumps({"text": res_content}))
+                             .msg_type("interactive")
+                             .content(content)
                              .build())\
                 .build()
-            client.im.v1.message.create(reply_req)
+            resp = client.im.v1.message.create(request)
+            if getattr(resp, 'success', None) and resp.success():
+                print("✅ 已发送卡片回复（私聊）")
+            else:
+                print(f"❌ 发送卡片（私聊）返回错误: code={getattr(resp,'code',None)}, msg={getattr(resp,'msg',None)}")
         else:
-            reply_req = ReplyMessageRequest.builder()\
+            request = ReplyMessageRequest.builder()\
                 .message_id(message_id)\
                 .request_body(ReplyMessageRequestBody.builder()
-                             .content(json.dumps({"text": res_content}))
-                             .msg_type("text")
+                             .content(content)
+                             .msg_type("interactive")
                              .build())\
                 .build()
-            client.im.v1.message.reply(reply_req)
+            resp = client.im.v1.message.reply(request)
+            if getattr(resp, 'success', None) and resp.success():
+                print("✅ 已发送卡片回复（群聊）")
+            else:
+                print(f"❌ 发送卡片（群聊）返回错误: code={getattr(resp,'code',None)}, msg={getattr(resp,'msg',None)}")
 
         # ========== 核心：返回标准成功响应 ==========
-        return lark.BaseResponse.builder().code(0).msg("success").build()
+        return lark.BaseResponse({"code": 0, "msg": "success"})
 
     except Exception as e:
         print(f"❌ 事件处理异常：{str(e)}")
         traceback.print_exc()
-        # 异常时移除ID，避免阻塞后续消息
+        # 若未成功写入表格，则删除已注册的消息ID，允许后续重试；若已写入则保留ID，避免重复写入
         if message_id in PROCESSED_MESSAGE_IDS:
-            del PROCESSED_MESSAGE_IDS[message_id]
+            if not wrote_to_base:
+                del PROCESSED_MESSAGE_IDS[message_id]
+            else:
+                print(f"ℹ️ 写入已成功，保留消息ID {message_id} 以防重复写入")
         # 异常也返回成功响应，防止飞书重试
-        return lark.BaseResponse.builder().code(0).msg("success").build()
+        return lark.BaseResponse({"code": 0, "msg": "success"})
 
 
 def main():
@@ -235,20 +288,18 @@ def main():
     print("🚀 飞书消息处理服务启动（lark-oapi >=1.5.2 适配版）")
     print(f"📋 多维表格配置：APP_TOKEN={APP_TOKEN}, TABLE_ID={TABLE_ID}")
 
-    # 1. 初始化事件处理器（新版本标准写法）
-    event_handler = lark.EventDispatcherHandler.builder()\
-        .encrypt_key(ENCRYPT_KEY)\
-        .verification_token(VERIFICATION_TOKEN)\
+    # 1. 初始化事件处理器（兼容 lark-oapi builder 接口）
+    event_handler = lark.EventDispatcherHandler.builder(ENCRYPT_KEY, VERIFICATION_TOKEN)\
         .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1)\
         .build()
 
-    # 2. 初始化WS客户端（新版本builder模式，参数清晰无冲突）
-    ws_client = lark.ws.Client.builder()\
-        .app_id(APP_ID)\
-        .app_secret(APP_SECRET)\
-        .event_handler(event_handler)\
-        .log_level(lark.LogLevel.DEBUG)\
-        .build()
+    # 2. 初始化WS客户端（兼容当前 lark-oapi 接口）
+    ws_client = lark.ws.Client(
+        APP_ID,
+        APP_SECRET,
+        event_handler=event_handler,
+        log_level=lark.LogLevel.DEBUG,
+    )
 
     # 3. 启动WS连接
     ws_client.start()
