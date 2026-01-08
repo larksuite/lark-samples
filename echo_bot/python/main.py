@@ -309,7 +309,9 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                                 "value": json.dumps({"action": "mark_processed", "url": filtered_url})
                             }
                         ]
-                    }
+                    },
+                    {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}}
+                    
                 ]
             }
         }
