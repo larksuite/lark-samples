@@ -324,8 +324,7 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                                 },
                                 "margin": "4px 0px 4px 12px",
                                 "element_id": "Top_title",
-                            },
-                            {"tag": "div", "text": {"tag": "plain_text", "content": f"实例: {INSTANCE_ID[:8]}"}, "margin": "4px 0px 4px 12px"}
+                            }
                         ],
                         "has_border": False,
                         "background_style": "green-100",
@@ -344,11 +343,11 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> lark.BaseResponse
                     {
                         "tag": "markdown",
                         "content": (
-                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person> ! 您分享的《<link url='{filtered_url}' pc_url='' ios_url='' android_url=''>{filtered_url}</link>》已成功收入文案库！"
+                            f"感谢  <person id='{open_id}' show_name=true show_avatar=true style='capsule'></person>  您分享的《<link url='{filtered_url}' pc_url='' ios_url='' android_url=''></link>》已成功收入文案库！"
                         ),
                         "text_align": "left",
                         "text_size": "normal_v2",
-                        "margin": "4px 0px 0px 12px",
+                        "margin": "4px 12px 0px 12px",
                     },
 
                 ],

@@ -1,35 +1,7 @@
+nohup: ignoring input
 🚀 飞书消息处理服务启动（lark-oapi >=1.5.2 适配版）
 📋 多维表格配置：APP_TOKEN=ETbFbDz36adFvmsYe0IcRkU3nId, TABLE_ID=tblUMI69DXHKNTYv
-🔢 实例ID：ba8d0e69-5199-4051-bea6-c6a5d926af15
-[Lark] [2026-01-08 11:04:12,334] [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7592944911956233419&access_key=66553d426eb2bdc093370d45b0e69f6d&service_id=33554678&ticket=2cbd6dda-7441-494a-9787-ea852131d6e1 [conn_id=7592944911956233419]
-[Lark] [2026-01-08 11:04:12,335] [DEBUG] ping success [conn_id=7592944911956233419]
-[Lark] [2026-01-08 11:04:12,414] [DEBUG] receive pong [conn_id=7592944911956233419]
-[Lark] [2026-01-08 11:05:42,336] [DEBUG] ping success [conn_id=7592944911956233419]
-[Lark] [2026-01-08 11:05:42,415] [DEBUG] receive pong [conn_id=7592944911956233419]
-[Lark] [2026-01-08 11:05:50,307] [DEBUG] receive message, message_type: event, message_id: d45170e8-f7b3-4769-9554-30843ab0d2d8, trace_id: 164391bb8d2f53bcc9c6120dce2a9c74, payload: {"schema":"2.0","header":{"event_id":"164391bb8d2f53bcc9c6120dce2a9c74","token":"","create_time":"1767870350139","event_type":"im.message.receive_v1","tenant_key":"2ee01f91880f1650","app_id":"cli_a9d5811ad8b89cb5"},"event":{"message":{"chat_id":"oc_b33cf3e5284173c376cc436905cfc94a","chat_type":"p2p","content":"{\"title\":\"美军扣押悬挂俄罗斯国旗的油轮，俄军高官：需要击沉几艘美国船只 - 今日头条\",\"card_link\":{\"url\":\"https://m.toutiao.com/article/7592772819470123556/?app=news_article\u0026category_new=__all__\u0026module_name=Android_tt_others\u0026share_did=MS4wLjACAAAAL6hHazsoovfBnN0G3oLcrvRLwWTqwEX8apaFGBEodMA\u0026share_uid=MS4wLjABAAAA3hwKKeDXhZHiJVGMpq6ZDc_NkfIqscDvpKPm060jfQU\u0026timestamp=1767870342\u0026tt_from=feishu\u0026upstream_biz=Android_others\u0026utm_campaign=client_share\u0026utm_medium=toutiao_android\u0026utm_source=feishu\u0026share_token=f107bf0b-8b0b-4f7e-818c-72e8fbe5ccf3\",\"android_url\":\"\",\"ios_url\":\"\",\"pc_url\":\"\"},\"elements\":[]}","create_time":"1767870349780","message_id":"om_x100b5accb617d8b8c26eef365244c58","message_type":"interactive","update_time":"1767870349780"},"sender":{"sender_id":{"open_id":"ou_b9532210879f47f08cd00293a534d164","union_id":"on_a6501b060ce02f3d3ce1cda143a2ac1d","user_id":"fdd9dg51"},"sender_type":"user","tenant_key":"2ee01f91880f1650"}}} [conn_id=7592944911956233419]
-✅ 获取用户信息成功：姓名=未知用户, open_id=ou_b9532210879f47f08cd00293a534d164
-✅ 写入多维表格成功：URL=https://m.toutiao.com/article/7592772819470123556/, 平台=头条, 分享人=未知用户
-✅ 已发送卡片回复（私聊）
-ℹ️ 清理过期消息ID：1个
-✅ 获取用户信息成功：姓名=未知用户, open_id=ou_b9532210879f47f08cd00293a534d164
-✅ 写入多维表格成功：URL=https://m.toutiao.com/article/7590734464045597230/, 平台=头条, 分享人=未知用户
-✅ 已发送卡片回复（私聊）
-ℹ️ 清理过期消息ID：1个
-✅ 获取用户信息成功：姓名=未知用户, open_id=ou_b9532210879f47f08cd00293a534d164
-✅ 写入多维表格成功：URL=https://m.toutiao.com/article/7592772819470123556/, 平台=头条, 分享人=未知用户
-✅ 已发送卡片回复（私聊）
-✅ 获取用户信息成功：姓名=未知用户, open_id=ou_b9532210879f47f08cd00293a534d164
-✅ 写入多维表格成功：URL=https://m.toutiao.com/article/7592772819470123556/, 平台=头条, 分享人=未知用户
-✅ 已发送卡片回复（私聊）
-ℹ️ 清理过期消息ID：2个
-✅ 获取用户信息成功：姓名=未知用户, open_id=ou_b9532210879f47f08cd00293a534d164
-✅ 写入多维表格成功：URL=https://m.toutiao.com/article/7590734464045597230/, 平台=头条, 分享人=未知用户
-✅ 已发送卡片回复（私聊）
-ℹ️ 清理过期消息ID：1个
-✅ 获取用户信息成功：姓名=未知用户, open_id=ou_b9532210879f47f08cd00293a534d164
-✅ 写入多维表格成功：URL=https://m.toutiao.com/article/7592772819470123556/, 平台=头条, 分享人=未知用户
-✅ 已发送卡片回复（私聊）
-ℹ️ 清理过期消息ID：1个
-✅ 获取用户信息成功：姓名=未知用户, open_id=ou_b9532210879f47f08cd00293a534d164
-✅ 写入多维表格成功：URL=https://m.toutiao.com/article/7590734464045597230/, 平台=头条, 分享人=未知用户
-✅ 已发送卡片回复（私聊）
+🔢 实例ID：62303a84-bdcd-4476-a222-67103d866e40
+[Lark] [2026-01-08 12:35:07,926] [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7592968343720791261&access_key=f77b5e8740f1f113368bb9c291d21ef6&service_id=33554678&ticket=8c792b46-772b-4c5e-a881-157d413a514a [conn_id=7592968343720791261]
+[Lark] [2026-01-08 12:35:07,926] [DEBUG] ping success [conn_id=7592968343720791261]
+[Lark] [2026-01-08 12:35:08,020] [DEBUG] receive pong [conn_id=7592968343720791261]
