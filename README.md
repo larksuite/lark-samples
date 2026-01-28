@@ -9,7 +9,7 @@ This is used to open Feishu code samples to help developers quickly use Feishu c
 - Echo bot [go](echo_robot/go/README.md) [python](echo_robot/python/README.md) [java](echo_robot/java/README.md) [nodejs](echo_robot/nodejs/README.md)
 - Interactive bot [go](interactive_bot/go/README.md) [python](interactive_bot/python/README.md) [java](interactive_bot/java/README.md) [nodejs](interactive_bot/nodejs/README.md)
 - MCP Larkbot Agent [nodejs](mcp_larkbot_demo/nodejs/README.md)
-- MCP Quick Demo [go](mcp_quick_demo/go/README.md) [python](mcp_quick_demo/python/README.md) [java](mcp_quick_demo/java/README.md) [nodejs](mcp_quick_demo/nodejs/README.md)
+- MCP Quick Demo [go](mcp_quick_remote_demo/go/README.md) [python](mcp_quick_remote_demo/python/README.md) [java](mcp_quick_remote_demo/java/README.md) [nodejs](mcp_quick_remote_demo/nodejs/README.md)
 
 
 ## License
