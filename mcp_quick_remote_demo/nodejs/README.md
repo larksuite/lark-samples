@@ -59,7 +59,7 @@ This project showcases two different Node.js implementations for integrating wit
    APP_SECRET=xxx
    LARK_DOMAIN=https://open.feishu.cn
    MCP_URL=https://mcp.feishu.cn/mcp
-   LARK_MCP_ALLOWED_TOOLS=create-doc,fetch-doc
+   LARK_MCP_ALLOWED_TOOLS=get-comments,fetch-doc
 
    OPENAI_API_KEY=sk-xxx
    OPENAI_MODEL=gpt-4o-mini

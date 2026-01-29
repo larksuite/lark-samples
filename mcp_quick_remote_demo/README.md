@@ -2,7 +2,7 @@
 
 # MCP 远程接入快速演示
 
-本目录 `mcp_quick_remote_demo/` 提供一个“可直接跑通”的 **Remote / HTTP MCP 接入 Demo**：客户端应用通过 `tenant_access_token`（TAT）鉴权，连接到 **Lark/飞书 OpenAPI MCP 远程 Endpoint**，在 AI Agent 推理过程中触发工具调用（示例默认：`fetch-doc` / `create-doc`）。
+本目录 `mcp_quick_remote_demo/` 提供一个“可直接跑通”的 **Remote / HTTP MCP 接入 Demo**：客户端应用通过 `tenant_access_token`（TAT）鉴权，连接到 **Lark/飞书 OpenAPI MCP 远程 Endpoint**，在 AI Agent 推理过程中触发工具调用（示例默认：`fetch-doc` / `get-comments`）。
 
 ## ✅ 入口文档
 

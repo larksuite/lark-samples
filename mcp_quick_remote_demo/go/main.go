@@ -1,3 +1,7 @@
+// References | 参考
+// MCP Go Client: https://mcp-go.dev/clients
+// Lark OpenAPI MCP: https://github.com/larksuite/lark-openapi-mcp
+
 package main
 
 import (
@@ -22,8 +26,10 @@ import (
 	mcpp "github.com/cloudwego/eino-ext/components/tool/mcp"
 )
 
+// UserPrompt is the default user prompt | UserPrompt 是默认的用户提示词
 var UserPrompt = `Please read the feishu document of https://feishu.feishu.cn/docx/WtwHdAngzoEU9IxyfhtcYsHCnDe by tenant_access_token`
 
+// SystemPrompt is the default system prompt | SystemPrompt 是默认的系统提示词
 var SystemPrompt = `You are a feishu smart assistant, you are good at helping users solve problems, you can call various tools of feishu to help users complete tasks.`
 
 func main() {
@@ -37,13 +43,18 @@ func main() {
 
 	ctx := context.Background()
 
+	// Get Tenant Access Token
+	// 获取 Tenant Access Token
 	tat, err := getTAT(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Get MCP tools from remote server
+	// 从远程服务器获取 MCP 工具
 	mcpTools := getMCPTool(ctx, tat)
 
+	// Create and configure ChatModel
 	// 创建并配置 ChatModel
 	chatModel, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
 		Model:   os.Getenv("OPENAI_MODEL"),
@@ -62,11 +73,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Create Agent with tools
+	// 使用工具创建 Agent
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
 		Model:       chatModel,
 		ToolsConfig: compose.ToolsNodeConfig{Tools: mcpTools},
 	})
 
+	// Generate response
+	// 生成响应
 	resp, err := agent.Generate(ctx, []*schema.Message{schema.SystemMessage(SystemPrompt), schema.UserMessage(UserPrompt)})
 	if err != nil {
 		log.Fatal(err)
@@ -83,11 +98,15 @@ func getenvDefault(key, defaultValue string) string {
 	return defaultValue
 }
 
+// getMCPTool connects to the MCP server and retrieves tools
+// getMCPTool 连接到 MCP 服务器并获取工具
 // https://www.cloudwego.io/docs/eino/ecosystem_integration/tool/tool_mcp/
 func getMCPTool(ctx context.Context, tat string) []tool.BaseTool {
 	mcpURL := getenvDefault("MCP_URL", "https://mcp.feishu.cn/mcp")
-	allowedTools := getenvDefault("LARK_MCP_ALLOWED_TOOLS", "create-doc,fetch-doc")
+	allowedTools := getenvDefault("LARK_MCP_ALLOWED_TOOLS", "get-comments,fetch-doc")
 
+	// Create MCP client with HTTP transport
+	// 创建带有 HTTP 传输的 MCP 客户端
 	cli, err := client.NewStreamableHttpClient(mcpURL, transport.WithHTTPHeaders(map[string]string{
 		"X-Lark-MCP-Allowed-Tools": allowedTools,
 		"X-Lark-MCP-TAT":           tat,
@@ -100,6 +119,8 @@ func getMCPTool(ctx context.Context, tat string) []tool.BaseTool {
 		log.Fatal(err)
 	}
 
+	// Initialize MCP client
+	// 初始化 MCP 客户端
 	initRequest := mcp.InitializeRequest{}
 	initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
 	initRequest.Params.ClientInfo = mcp.Implementation{
@@ -112,6 +133,8 @@ func getMCPTool(ctx context.Context, tat string) []tool.BaseTool {
 		log.Fatal(err)
 	}
 
+	// Get tools from MCP client
+	// 从 MCP 客户端获取工具
 	tools, err := mcpp.GetTools(ctx, &mcpp.Config{Cli: cli})
 	if err != nil {
 		log.Fatal(err)
@@ -120,6 +143,8 @@ func getMCPTool(ctx context.Context, tat string) []tool.BaseTool {
 	return tools
 }
 
+// getTAT retrieves the Tenant Access Token from Lark/Feishu
+// getTAT 从飞书获取 Tenant Access Token
 func getTAT(ctx context.Context) (string, error) {
 	appID := os.Getenv("APP_ID")
 	appSecret := os.Getenv("APP_SECRET")
@@ -143,11 +168,15 @@ func getTAT(ctx context.Context) (string, error) {
 	return resp.TenantAccessToken, nil
 }
 
+// HeaderTransport adds custom headers to HTTP requests
+// HeaderTransport 向 HTTP 请求添加自定义标头
 type HeaderTransport struct {
 	Transport http.RoundTripper
 	Headers   map[string]string
 }
 
+// RoundTrip executes a single HTTP transaction
+// RoundTrip 执行单个 HTTP 事务
 func (t *HeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	for k, v := range t.Headers {
 		req.Header.Set(k, v)

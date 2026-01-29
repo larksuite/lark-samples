@@ -11,7 +11,6 @@ This project demonstrates a minimal runnable version of **LangChain4j + Feishu/L
 ### References | 参考
 
 - NodeJS Remote Demo: `mcp_quick_remote_demo/nodejs`
-- Java Quick Demo (stdio): `mcp_quick_demo/java`
 
 ## Prerequisites | 前置要求
 
@@ -30,7 +29,7 @@ Create a `.env` file in the project root (copy from `.env.example`):
 - `OPENAI_BASE_URL`: Optional, for self-hosted/third-party gateways (e.g. `/v1`) | 可选，兼容自建/第三方网关（例如 `/v1`）
 - `LARK_DOMAIN`: Optional, default `https://open.feishu.cn` | 可选，默认 `https://open.feishu.cn`
 - `MCP_URL`: Optional, default `https://mcp.feishu.cn/mcp` | 可选，默认 `https://mcp.feishu.cn/mcp`
-- `LARK_MCP_ALLOWED_TOOLS`: Optional, default `create-doc,fetch-doc` | 可选，默认 `create-doc,fetch-doc`
+- `LARK_MCP_ALLOWED_TOOLS`: Optional, default `get-comments,fetch-doc` | 可选，默认 `get-comments,fetch-doc`
 
 ## Usage | 使用方法
 

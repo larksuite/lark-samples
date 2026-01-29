@@ -41,21 +41,32 @@ const model = createOpenAICompatible({
  * @returns {Promise<MCPClient>} Configured MCP client | 配置好的 MCP 客户端
  */
 async function createLarkMCPClient() {
+  // Initialize Lark Client
+  // 初始化飞书/Lark 客户端
   const client = new Lark.Client({
     appId: process.env.APP_ID,
     appSecret: process.env.APP_SECRET,
   });
+
+  // Get Tenant Access Token
+  // 获取 Tenant Access Token
   const tenantAccessToken = await client.tokenManager.getTenantAccessToken();
 
+  // Get MCP URL and allowed tools from environment variables
+  // 从环境变量获取 MCP URL 和允许使用的工具
   const mcpUrl = process.env.MCP_URL || "https://mcp.feishu.cn/mcp";
   const allowedTools =
-    process.env.LARK_MCP_ALLOWED_TOOLS || "create-doc,fetch-doc";
+    process.env.LARK_MCP_ALLOWED_TOOLS || "get-comments,fetch-doc";
 
+  // Create MCP Client with HTTP transport
+  // 创建带有 HTTP 传输的 MCP 客户端
   const mcpClient = await createMCPClient({
     transport: {
       type: "http",
       url: mcpUrl,
       headers: {
+        // Pass allowed tools and TAT via headers
+        // 通过请求头传递允许的工具和 TAT
         "X-Lark-MCP-Allowed-Tools": allowedTools,
         "X-Lark-MCP-TAT": tenantAccessToken,
       },
@@ -86,18 +97,18 @@ async function main() {
       if (chunk.chunk.type === "text-delta") {
         process.stdout.write(chunk.chunk.textDelta);
       } else if (chunk.chunk.type === "tool-call") {
-        console.log("🔧 Tool Call");
+        console.log("🔧 工具调用 | Tool Call");
         console.log(chunk.chunk);
       } else if (chunk.chunk.type === "tool-result") {
-        console.log("🔧 Tool Result");
+        console.log("🔧 工具结果 | Tool Result");
         console.log(chunk.chunk);
       }
     },
     onStepFinish: () => {
-      console.log("✅ Step Finish");
+      console.log("✅ 步骤完成 | Step Finish");
     },
     onFinish: () => {
-      console.log("✅ All Finish");
+      console.log("✅ 全部完成 | All Finish");
     },
   });
 
