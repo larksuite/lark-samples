@@ -1,0 +1,28 @@
+{
+  "name": "mcp-quick-demo-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/langchain.js",
+    "dev": "node src/langchain.js",
+    "dev:ai": "node src/ai-sdk.js",
+    "dev:langchain": "node src/langchain.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@ai-sdk/mcp": "^1.0.6",
+    "@ai-sdk/openai": "^3.0.9",
+    "@ai-sdk/openai-compatible": "^2.0.7",
+    "@langchain/core": "^1.1.12",
+    "@langchain/langgraph": "^1.0.15",
+    "@langchain/mcp-adapters": "^1.1.1",
+    "@langchain/openai": "^1.2.1",
+    "@larksuiteoapi/node-sdk": "^1.56.1",
+    "ai": "^6.0.31",
+    "dotenv": "^17.2.3",
+    "langchain": "^1.2.7",
+    "zod": "^3.25.67"
+  }
+}

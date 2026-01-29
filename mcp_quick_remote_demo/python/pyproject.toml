@@ -1,0 +1,13 @@
+[project]
+name = "python"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain-core>=1.2.7",
+    "langchain-mcp-adapters>=0.2.1",
+    "langchain-openai>=1.1.7",
+    "langgraph>=1.0.6",
+    "lark-oapi>=1.5.2",
+    "mcp-use>=1.5.2",
+]
