@@ -48,21 +48,33 @@ const model = new ChatOpenAI({
  * @returns {Promise<MultiServerMCPClient>} Configured MCP client | 配置好的 MCP 客户端
  */
 async function createLarkMCPClient() {
+  // Initialize Lark Client
+  // 初始化飞书/Lark 客户端
   const client = new Lark.Client({
     appId: process.env.APP_ID,
     appSecret: process.env.APP_SECRET,
   });
+
+  // Get Tenant Access Token
+  // 获取 Tenant Access Token
   const tenantAccessToken = await client.tokenManager.getTenantAccessToken();
 
+  // Get MCP URL and allowed tools from environment variables
+  // 从环境变量获取 MCP URL 和允许使用的工具
   const mcpUrl = process.env.MCP_URL || "https://mcp.feishu.cn/mcp";
   const allowedTools =
-    process.env.LARK_MCP_ALLOWED_TOOLS || "create-doc,fetch-doc";
+    process.env.LARK_MCP_ALLOWED_TOOLS || "get-comments,fetch-doc";
+    
+  // Create MultiServerMCPClient with HTTP transport
+  // 创建带有 HTTP 传输的 MultiServerMCPClient
   return new MultiServerMCPClient({
     mcpServers: {
       "lark-mcp": {
         transport: "http",
         url: mcpUrl,
         headers: {
+          // Pass allowed tools and TAT via headers
+          // 通过请求头传递允许的工具和 TAT
           "X-Lark-MCP-Allowed-Tools": allowedTools,
           "X-Lark-MCP-TAT": tenantAccessToken,
         },
@@ -76,7 +88,7 @@ async function main() {
   const tools = await mcpClient.getTools();
   const agent = createAgent({ model, tools });
 
-  console.log("🚀 invoke agent");
+  console.log("🚀 调用 Agent | Invoke agent");
   try {
     const response = await agent.invoke({
       messages: [
