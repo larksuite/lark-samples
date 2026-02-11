@@ -46,27 +46,42 @@ model = ChatOpenAI(
 
 
 def get_tat():
+    """
+    Get Tenant Access Token from Lark/Feishu
+    从飞书获取 Tenant Access Token
+    """
     app_id = os.getenv("APP_ID")
     app_secret = os.getenv("APP_SECRET")
-    
+
     if not app_id or not app_secret:
         raise ValueError("APP_ID and APP_SECRET are required")
 
-    client = lark.Client.builder().app_id(app_id).app_secret(app_secret).build()
-    
-    req = InternalTenantAccessTokenRequest.builder() \
-        .request_body(InternalTenantAccessTokenRequestBody.builder()
+    client = (
+        lark.Client.builder()
+        .app_id(app_id)
+        .app_secret(app_secret)
+        .domain(os.getenv("LARK_DOMAIN", "https://open.feishu.cn"))
+        .build()
+    )
+
+    req = (
+        InternalTenantAccessTokenRequest.builder()
+        .request_body(
+            InternalTenantAccessTokenRequestBody.builder()
             .app_id(app_id)
             .app_secret(app_secret)
-            .build()) \
+            .build()
+        )
         .build()
-        
+    )
+
     resp = client.auth.v3.tenant_access_token.internal(req)
-    
+
     if not resp.success():
         raise Exception(f"Failed to get tenant access token: {resp.msg}")
-    
+
     import json
+
     data = json.loads(resp.raw.content)
     return data.get("tenant_access_token")
 
@@ -80,13 +95,22 @@ def create_lark_mcp_client(tenant_access_token):
         MCPClient: Configured MCP client instance
         MCPClient: 配置好的 MCP 客户端实例
     """
+    # Get MCP URL and allowed tools from environment variables
+    # 从环境变量获取 MCP URL 和允许使用的工具
+    mcp_url = os.getenv("MCP_URL", "https://mcp.feishu.cn/mcp")
+    allowed_tools = os.getenv("LARK_MCP_ALLOWED_TOOLS", "get-comments,fetch-doc")
+
+    # Configure MCP client with HTTP transport
+    # 配置带有 HTTP 传输的 MCP 客户端
     config = {
         "mcpServers": {
             "lark-mcp": {
                 "type": "http",
-                "url": "https://mcp.feishu.cn/mcp",
+                "url": mcp_url,
                 "headers": {
-                    "X-Lark-MCP-Allowed-Tools": "create-doc,fetch-doc",
+                    # Pass allowed tools and TAT via headers
+                    # 通过请求头传递允许的工具和 TAT
+                    "X-Lark-MCP-Allowed-Tools": allowed_tools,
                     "X-Lark-MCP-TAT": tenant_access_token,
                 },
             }

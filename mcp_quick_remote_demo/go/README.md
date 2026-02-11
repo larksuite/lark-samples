@@ -8,8 +8,8 @@ This project demonstrates a minimal runnable version of **Go + Remote / HTTP MCP
   用 `APP_ID/APP_SECRET` 换取 `tenant_access_token`（TAT）
 - Connect to Remote MCP Endpoint (default `https://mcp.feishu.cn/mcp`) via `client.NewStreamableHttpClient`
   通过 `client.NewStreamableHttpClient` 连接 Remote MCP Endpoint（默认 `https://mcp.feishu.cn/mcp`）
-- Control tool whitelist via Header (default: `create-doc,fetch-doc`)
-  通过 Header 控制工具白名单（默认：`create-doc,fetch-doc`）
+- Control tool whitelist via Header (default: `get-comments,fetch-doc`)
+  通过 Header 控制工具白名单（默认：`get-comments,fetch-doc`）
 - Inject MCP tools into Eino ReAct Agent to trigger tool calls during chat
   将 MCP tools 注入 Eino ReAct Agent，在对话中触发工具调用
 
@@ -29,9 +29,6 @@ Copy and fill in `.env` in `mcp_quick_remote_demo/go` directory:
 ```bash
 cp .env.example .env
 ```
-
-For key variable explanations, see `mcp_quick_remote_demo/DEVELOPMENT_GUIDE.zh.md`.
-关键变量说明见 `mcp_quick_remote_demo/DEVELOPMENT_GUIDE.zh.md`。
 
 ## Usage | 运行
 
