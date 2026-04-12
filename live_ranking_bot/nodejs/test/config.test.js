@@ -14,6 +14,7 @@ test("loads required config with defaults", () => {
     appSecret: "secret",
     domain: "https://open.feishu.cn",
     aistupidBaseUrl: "https://aistupidlevel.info",
+    cacheStateFile: ".cache/lazybot-state.json",
     botOpenId: null,
     botUserId: null,
     rankLimit: 10,
@@ -30,6 +31,16 @@ test("loads optional bot identity values", () => {
 
   assert.equal(config.botOpenId, "ou_bot");
   assert.equal(config.botUserId, "cli_bot");
+});
+
+test("loads optional cache state file", () => {
+  const config = loadRuntimeConfig({
+    APP_ID: "cli_test",
+    APP_SECRET: "secret",
+    CACHE_STATE_FILE: "/tmp/lazybot-state.json",
+  });
+
+  assert.equal(config.cacheStateFile, "/tmp/lazybot-state.json");
 });
 
 test("throws when app id is missing", () => {

@@ -1,47 +1,33 @@
-# Live Ranking Bot
+# Lazybot
 
-This sample is a Feishu long-connection bot based on the official echo-bot
-pattern. Instead of echoing user text, it responds to `/rank` and
-`/leaderboard` with the current AI Stupid Meter leaderboard.
+Feishu long-connection bot that responds to `/rank` and `/leaderboard`
+with the current AI Stupid Meter leaderboard.
 
-## Features
+The bot reads the live API from:
 
-- Uses the Feishu long-connection SDK event flow
-- Supports `/rank` and `/leaderboard`
-- Fetches live ranking data from `https://aistupidlevel.info`
-- Bootstraps from `/api/dashboard/cached` for fast startup, summary data, and fallback rows
-- Refreshes entries from `/api/dashboard/scores` in the background
-- Keeps a 30-minute in-memory snapshot cache for faster repeated commands
-- Deduplicates repeated Feishu deliveries by `message_id`
-- Uses deterministic outbound `uuid` values to reduce duplicate sends
-- Requires `@bot` mentions for group commands and posts the response back into the same group
-- Supports optional strict mention matching via bot identity env vars
+- `/api/dashboard/cached` for fast bootstrap, fallback ranking rows, and summary data
+- `/api/dashboard/scores` for preferred live ranking refreshes
 
-## Environment variables
+It keeps a 30-minute in-memory snapshot cache and refreshes the ranking in the
+background so repeated commands return quickly. It also persists the latest
+ranking snapshot plus recent done receipts into `./.cache/lazybot-state.json`
+by default, so the bot can resume warm after a restart.
 
-- `APP_ID`
-- `APP_SECRET`
-- `BASE_DOMAIN` optional, defaults to `https://open.feishu.cn`
-- `AISTUPID_BASE_URL` optional, defaults to `https://aistupidlevel.info`
-- `BOT_OPEN_ID` optional, used for strict group mention matching
-- `BOT_USER_ID` optional, used for strict group mention matching
-- `RANK_LIMIT` optional, defaults to `10`
-
-## Start the sample
-
-macOS/Linux: `APP_ID=<app_id> APP_SECRET=<app_secret> ./bootstrap.sh`
-
-Windows: `set APP_ID=<app_id>&set APP_SECRET=<app_secret>&bootstrap.bat`
-
-Or run manually:
+## Setup
 
 1. Install dependencies with `npm install`.
 2. Copy `.env.example` to `.env` and fill in your Feishu app credentials.
 3. Start the bot with `npm start`.
 
-## Feishu requirements
+Optional env vars:
 
-Before testing the sample, make sure your Feishu app has:
+- `CACHE_STATE_FILE` to override the persisted state path
+- `BOT_OPEN_ID` / `BOT_USER_ID` for strict group-mention identity matching
+- `RANK_LIMIT` to change the number of rows shown
+
+## Feishu Requirements
+
+Before testing the bot, make sure your Feishu app has:
 
 1. Bot ability enabled.
 2. `接收消息 v2.0` subscribed.
@@ -57,15 +43,25 @@ If you want strict mention matching, set `BOT_OPEN_ID` and/or `BOT_USER_ID`.
 Without those values, the sample falls back to a leading-mention check and
 assumes the app only receives `@bot` group events.
 
-## Test
+Real Feishu receive events carry group mentions as JSON `content.text` plus a
+separate `mentions` array. This sample strips leading mention keys such as
+`@_user_1`, display-name mentions such as `@今天你的大模型变笨了吗`, and keeps
+legacy `<at ...>` markup as a compatibility fallback.
 
-Run `npm test`.
+## Commands
 
-## Manual smoke test
+- `/rank`
+- `/leaderboard`
+
+## Manual Smoke Test
 
 1. DM the bot with `/rank` three times and confirm each message gets one reply.
 2. Invite the bot into a group and send `@bot /rank`; confirm there is one
    group message back in the same chat.
 3. Send `@bot hello` in the same group; confirm there is no ranking reply.
-4. If you still see duplicate replies, check that only one long-connection
+4. Restart the bot after one successful `/rank`, then send `/rank` again and
+   confirm the first reply is still fast because the last snapshot was restored.
+5. If group `@bot /rank` still does not arrive, re-check that `接收消息 v2.0`
+   is subscribed in the Feishu app config in addition to the required scopes.
+6. If you still see duplicate replies, check that only one long-connection
    consumer is attached to the Feishu app.

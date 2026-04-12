@@ -176,6 +176,95 @@ test("returns warm cache immediately and starts only one background refresh", as
   );
 });
 
+test("hydrates a persisted snapshot and refreshes it in the background", async () => {
+  let nowMs = 0;
+  const persistedSnapshot = {
+    entries: [createModelRow({ name: "persisted-alpha", score: 61, currentScore: 61 })],
+    summary: {
+      snapshot: "Best for code: persisted-alpha (#1), drift alerts 0, degradations 0, confidence 70%",
+      updatedAt: "2026-04-12T03:20:43.338Z",
+    },
+    storedAtMs: 0,
+  };
+  const observedSnapshots = [];
+  const client = new RankingClient({
+    initialSnapshot: persistedSnapshot,
+    onSnapshotChange: (snapshot) => observedSnapshots.push(snapshot),
+    now: () => nowMs,
+    fetchImpl: async (url) => {
+      if (url.toString().endsWith("/api/dashboard/scores")) {
+        return jsonResponse(
+          createScoresPayload({
+            rows: [createModelRow({ name: "refreshed-alpha", score: 68, currentScore: 68 })],
+          }),
+        );
+      }
+
+      return jsonResponse(
+        createCachedPayload({
+          modelScores: [createModelRow({ name: "refreshed-alpha", score: 68, currentScore: 68 })],
+          bestForCode: { name: "refreshed-alpha", rank: 1 },
+        }),
+      );
+    },
+  });
+
+  const initial = await client.fetchRanking();
+  assert.equal(initial.entries[0].name, "persisted-alpha");
+  assert.equal(initial.isStale, false);
+
+  await flushTasks();
+
+  nowMs = 1;
+
+  const refreshed = await client.fetchRanking();
+  assert.equal(refreshed.entries[0].name, "refreshed-alpha");
+  assert.equal(observedSnapshots.at(-1)?.entries[0].name, "refreshed-alpha");
+});
+
+test("returns a restored stale snapshot immediately while refresh continues", async () => {
+  let fetchCalls = 0;
+  const client = new RankingClient({
+    cacheTtlMs: 100,
+    initialSnapshot: {
+      entries: [createModelRow({ name: "persisted-alpha", score: 61, currentScore: 61 })],
+      summary: {
+        snapshot: "Best for code: persisted-alpha (#1), drift alerts 0, degradations 0, confidence 70%",
+        updatedAt: "2026-04-12T03:20:43.338Z",
+      },
+      storedAtMs: 0,
+    },
+    now: () => 101,
+    fetchImpl: async (url) => {
+      fetchCalls += 1;
+
+      if (url.toString().endsWith("/api/dashboard/scores")) {
+        return jsonResponse(
+          createScoresPayload({
+            rows: [createModelRow({ name: "refreshed-alpha", score: 68, currentScore: 68 })],
+          }),
+        );
+      }
+
+      return jsonResponse(
+        createCachedPayload({
+          modelScores: [createModelRow({ name: "refreshed-alpha", score: 68, currentScore: 68 })],
+          bestForCode: { name: "refreshed-alpha", rank: 1 },
+        }),
+      );
+    },
+  });
+
+  const ranking = await client.fetchRanking();
+
+  assert.equal(ranking.entries[0].name, "persisted-alpha");
+  assert.equal(ranking.isStale, true);
+
+  await flushTasks();
+
+  assert.equal(fetchCalls, 2);
+});
+
 test("keeps serving the last good snapshot as stale when refresh fails", async () => {
   let nowMs = 0;
   let phase = "bootstrap";

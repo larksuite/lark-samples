@@ -13,6 +13,8 @@ export class RankingClient {
     rankLimit = 10,
     cacheTtlMs = DEFAULT_RANKING_CACHE_TTL_MS,
     now = () => Date.now(),
+    initialSnapshot = null,
+    onSnapshotChange = null,
   } = {}) {
     if (typeof fetchImpl !== "function") {
       throw new TypeError("RankingClient requires a fetch implementation");
@@ -23,7 +25,9 @@ export class RankingClient {
     this.rankLimit = normalizeRankLimit(rankLimit);
     this.cacheTtlMs = cacheTtlMs;
     this.now = now;
-    this.snapshot = null;
+    this.onSnapshotChange =
+      typeof onSnapshotChange === "function" ? onSnapshotChange : null;
+    this.snapshot = normalizeSnapshot(initialSnapshot);
     this.bootstrapPromise = null;
     this.refreshPromise = null;
   }
@@ -117,12 +121,24 @@ export class RankingClient {
   }
 
   setSnapshot(snapshot) {
-    this.snapshot = snapshot;
-    return snapshot;
+    const normalizedSnapshot = normalizeSnapshot(snapshot);
+
+    if (!normalizedSnapshot) {
+      this.snapshot = null;
+      return null;
+    }
+
+    this.snapshot = normalizedSnapshot;
+    this.onSnapshotChange?.(cloneSnapshot(normalizedSnapshot));
+    return normalizedSnapshot;
   }
 
   isSnapshotStale(snapshot) {
     return this.now() - snapshot.storedAtMs > this.cacheTtlMs;
+  }
+
+  getPersistableSnapshot() {
+    return cloneSnapshot(this.snapshot);
   }
 
   async fetchJson(path, label) {
@@ -258,6 +274,49 @@ function createSnapshot({ entries, summary, storedAtMs }) {
   };
 }
 
+function normalizeSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") {
+    return null;
+  }
+
+  if (!Array.isArray(snapshot.entries) || !snapshot.summary) {
+    return null;
+  }
+
+  if (!Number.isFinite(snapshot.storedAtMs)) {
+    return null;
+  }
+
+  return {
+    entries: snapshot.entries.map((entry) => ({
+      id: String(entry?.id),
+      name: String(entry?.name),
+      provider: firstString(entry?.provider, "unknown"),
+      score: normalizeSnapshotScore(entry?.score),
+      trend: firstString(entry?.trend, "unknown"),
+      status: firstString(entry?.status, "unknown"),
+      lastUpdated: firstString(entry?.lastUpdated, "unknown"),
+    })),
+    summary: {
+      snapshot: firstString(snapshot.summary?.snapshot, "unknown"),
+      updatedAt: firstString(snapshot.summary?.updatedAt, "unknown"),
+    },
+    storedAtMs: snapshot.storedAtMs,
+  };
+}
+
+function cloneSnapshot(snapshot) {
+  if (!snapshot) {
+    return null;
+  }
+
+  return {
+    entries: snapshot.entries.map((entry) => ({ ...entry })),
+    summary: { ...snapshot.summary },
+    storedAtMs: snapshot.storedAtMs,
+  };
+}
+
 function snapshotToPublicRanking(snapshot, isStale) {
   return {
     entries: snapshot.entries.map((entry) => ({ ...entry })),
@@ -284,6 +343,11 @@ function getModelScore(model) {
   }
 
   throw new Error(`Dashboard scores model ${String(model.name)} is missing score`);
+}
+
+function normalizeSnapshotScore(value) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
 }
 
 function firstString(...values) {

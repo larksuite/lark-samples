@@ -1,4 +1,5 @@
 import { DEFAULT_AISTUPID_BASE_URL } from "./ranking-client.js";
+import { DEFAULT_CACHE_STATE_FILE } from "./persisted-bot-state.js";
 
 const DEFAULT_FEISHU_DOMAIN = "https://open.feishu.cn";
 
@@ -20,6 +21,8 @@ export function loadRuntimeConfig(env = process.env) {
     domain: env.BASE_DOMAIN?.trim() || DEFAULT_FEISHU_DOMAIN,
     aistupidBaseUrl:
       env.AISTUPID_BASE_URL?.trim() || DEFAULT_AISTUPID_BASE_URL,
+    cacheStateFile:
+      trimOptionalValue(env.CACHE_STATE_FILE) || DEFAULT_CACHE_STATE_FILE,
     botOpenId: trimOptionalValue(env.BOT_OPEN_ID),
     botUserId: trimOptionalValue(env.BOT_USER_ID),
     rankLimit: parseRankLimit(env.RANK_LIMIT),
