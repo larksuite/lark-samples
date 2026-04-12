@@ -14,8 +14,22 @@ test("loads required config with defaults", () => {
     appSecret: "secret",
     domain: "https://open.feishu.cn",
     aistupidBaseUrl: "https://aistupidlevel.info",
+    botOpenId: null,
+    botUserId: null,
     rankLimit: 10,
   });
+});
+
+test("loads optional bot identity values", () => {
+  const config = loadRuntimeConfig({
+    APP_ID: "cli_test",
+    APP_SECRET: "secret",
+    BOT_OPEN_ID: "ou_bot",
+    BOT_USER_ID: "cli_bot",
+  });
+
+  assert.equal(config.botOpenId, "ou_bot");
+  assert.equal(config.botUserId, "cli_bot");
 });
 
 test("throws when app id is missing", () => {

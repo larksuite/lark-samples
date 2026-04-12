@@ -40,6 +40,7 @@ test("formats summary and ranked entries in plain text", () => {
         "Best for code: alpha (#1), drift alerts 2, degradations 1, confidence 60%",
       updatedAt: "2026-04-12T03:20:43.338Z",
     },
+    isStale: false,
   });
 
   assert.match(message, /AI Stupid Meter Live Ranking/);
@@ -51,6 +52,28 @@ test("formats summary and ranked entries in plain text", () => {
   assert.match(message, /1\. alpha - 67 \(openai, up\/good\)/);
   assert.match(message, /2\. beta - 65 \(anthropic, stable\/good\)/);
   assert.match(message, /3\. gamma - 61 \(google, down\/warning\)/);
+});
+
+test("adds a stale note when serving stale ranking data", () => {
+  const message = formatRankingMessage({
+    entries: [
+      {
+        id: "1",
+        name: "alpha",
+        provider: "openai",
+        score: 67,
+        trend: "up",
+        status: "good",
+      },
+    ],
+    summary: {
+      snapshot: "Best for code: alpha (#1)",
+      updatedAt: "2026-04-12T03:20:43.338Z",
+    },
+    isStale: true,
+  });
+
+  assert.match(message, /Data may be stale while the bot refreshes the latest ranking\./);
 });
 
 test("formats usage message with supported slash commands", () => {

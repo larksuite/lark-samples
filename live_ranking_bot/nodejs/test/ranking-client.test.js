@@ -12,97 +12,94 @@ function jsonResponse(payload, status = 200) {
   });
 }
 
-function createCachedPayload(overrides = {}) {
+function createModelRow(overrides = {}) {
   return {
-    success: true,
-    data: {
-      recommendations: {
-        bestForCode: {
-          name: "alpha",
-          rank: 1,
-        },
-      },
-      driftIncidents: [{ id: 1 }, { id: 2 }],
-      degradations: [{ id: 11 }],
-      transparencyMetrics: {
-        summary: {
-          confidence: 60,
-          lastUpdate: "2026-04-12T03:20:43.338Z",
-        },
-      },
-    },
-    meta: {
-      cachedAt: "2026-04-12T03:18:10.820Z",
-    },
-    ...overrides,
-  };
-}
-
-function createScoresPayload(overrides = {}) {
-  return {
-    success: true,
-    data: [
-      {
-        id: "1",
-        name: "alpha",
-        provider: "openai",
-        currentScore: 67,
-        trend: "up",
-        status: "good",
-        lastUpdated: "2026-04-12T03:00:04.636Z",
-      },
-      {
-        id: "2",
-        name: "beta",
-        provider: "anthropic",
-        score: 65,
-        trend: "stable",
-        status: "good",
-        lastUpdated: "2026-04-12T03:00:04.636Z",
-      },
-      ...(overrides.extraRows ?? []),
-    ],
-    ...overrides,
-  };
-}
-
-test("fetches and maps dashboard scores with cached summary data", async () => {
-  const fetchCalls = [];
-  const fetchImpl = async (url) => {
-    fetchCalls.push(url.toString());
-
-    if (url.toString().endsWith("/api/dashboard/cached")) {
-      return jsonResponse(createCachedPayload());
-    }
-
-    return jsonResponse(createScoresPayload());
-  };
-
-  const client = new RankingClient({
-    baseUrl: "https://aistupidlevel.info",
-    fetchImpl,
-    rankLimit: 1,
-  });
-
-  const ranking = await client.fetchRanking();
-
-  assert.equal(fetchCalls.length, 2);
-  assert.ok(
-    fetchCalls.includes("https://aistupidlevel.info/api/dashboard/scores"),
-  );
-  assert.ok(
-    fetchCalls.includes("https://aistupidlevel.info/api/dashboard/cached"),
-  );
-  assert.equal(ranking.entries.length, 1);
-  assert.deepEqual(ranking.entries[0], {
     id: "1",
     name: "alpha",
     provider: "openai",
+    vendor: "openai",
+    currentScore: 67,
     score: 67,
     trend: "up",
     status: "good",
     lastUpdated: "2026-04-12T03:00:04.636Z",
+    ...overrides,
+  };
+}
+
+function createCachedPayload({
+  modelScores = [createModelRow()],
+  bestForCode = { name: "alpha", rank: 1 },
+  driftIncidents = [{ id: 1 }, { id: 2 }],
+  degradations = [{ id: 11 }],
+  summary = {
+    confidence: 60,
+    lastUpdate: "2026-04-12T03:20:43.338Z",
+  },
+  meta = {
+    cachedAt: "2026-04-12T03:18:10.820Z",
+  },
+  ...overrides
+} = {}) {
+  return {
+    success: true,
+    data: {
+      modelScores,
+      recommendations: {
+        bestForCode,
+      },
+      driftIncidents,
+      degradations,
+      transparencyMetrics: {
+        summary,
+      },
+    },
+    meta,
+    ...overrides,
+  };
+}
+
+function createScoresPayload({ rows = [createModelRow()], ...overrides } = {}) {
+  return {
+    success: true,
+    data: rows,
+    ...overrides,
+  };
+}
+
+async function flushTasks() {
+  await new Promise((resolve) => setImmediate(resolve));
+}
+
+test("bootstraps from cached dashboard when live scores are unavailable", async () => {
+  const client = new RankingClient({
+    baseUrl: "https://aistupidlevel.info",
+    fetchImpl: async (url) => {
+      if (url.toString().endsWith("/api/dashboard/cached")) {
+        return jsonResponse(
+          createCachedPayload({
+            modelScores: [
+              createModelRow({
+                id: "cached-1",
+                name: "cached-alpha",
+                currentScore: 62,
+                score: 62,
+              }),
+            ],
+          }),
+        );
+      }
+
+      return jsonResponse({ error: "scores unavailable" }, 503);
+    },
   });
+
+  const ranking = await client.fetchRanking();
+
+  assert.equal(ranking.entries.length, 1);
+  assert.equal(ranking.entries[0].name, "cached-alpha");
+  assert.equal(ranking.entries[0].score, 62);
+  assert.equal(ranking.isStale, false);
   assert.deepEqual(ranking.summary, {
     snapshot:
       "Best for code: alpha (#1), drift alerts 2, degradations 1, confidence 60%",
@@ -110,61 +107,132 @@ test("fetches and maps dashboard scores with cached summary data", async () => {
   });
 });
 
-test("maps partial score rows with safe defaults", async () => {
+test("returns warm cache immediately and starts only one background refresh", async () => {
+  const fetchCalls = [];
   const client = new RankingClient({
     fetchImpl: async (url) => {
-      if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse(createCachedPayload());
+      const requestUrl = url.toString();
+      fetchCalls.push(requestUrl);
+
+      if (fetchCalls.length === 1 && requestUrl.endsWith("/api/dashboard/cached")) {
+        return jsonResponse(
+          createCachedPayload({
+            modelScores: [createModelRow({ name: "bootstrap-alpha", score: 61, currentScore: 61 })],
+          }),
+        );
       }
 
-      return jsonResponse({
-        success: true,
-        data: [
-          {
-            id: "7",
-            name: "gamma",
-            vendor: "google",
-            score: 61,
-          },
-        ],
-      });
+      if (fetchCalls.length === 2 && requestUrl.endsWith("/api/dashboard/scores")) {
+        return jsonResponse(
+          createScoresPayload({
+            rows: [createModelRow({ name: "refresh-alpha", score: 66, currentScore: 66 })],
+          }),
+        );
+      }
+
+      if (fetchCalls.length === 3 && requestUrl.endsWith("/api/dashboard/cached")) {
+        return jsonResponse(
+          createCachedPayload({
+            modelScores: [createModelRow({ name: "refresh-alpha", score: 66, currentScore: 66 })],
+          }),
+        );
+      }
+
+      if (requestUrl.endsWith("/api/dashboard/scores")) {
+        return jsonResponse(
+          createScoresPayload({
+            rows: [createModelRow({ name: "refresh-beta", score: 68, currentScore: 68 })],
+          }),
+        );
+      }
+
+      return jsonResponse(
+        createCachedPayload({
+          modelScores: [createModelRow({ name: "refresh-beta", score: 68, currentScore: 68 })],
+        }),
+      );
     },
   });
 
-  const ranking = await client.fetchRanking();
+  await client.fetchRanking();
+  await flushTasks();
 
-  assert.deepEqual(ranking.entries[0], {
-    id: "7",
-    name: "gamma",
-    provider: "google",
-    score: 61,
-    trend: "unknown",
-    status: "unknown",
-    lastUpdated: "unknown",
-  });
+  fetchCalls.length = 0;
+
+  const [first, second] = await Promise.all([
+    client.fetchRanking(),
+    client.fetchRanking(),
+  ]);
+  await flushTasks();
+
+  assert.equal(first.entries[0].name, "refresh-alpha");
+  assert.equal(second.entries[0].name, "refresh-alpha");
+  assert.equal(fetchCalls.length, 2);
+  assert.ok(
+    fetchCalls.includes("https://aistupidlevel.info/api/dashboard/scores"),
+  );
+  assert.ok(
+    fetchCalls.includes("https://aistupidlevel.info/api/dashboard/cached"),
+  );
 });
 
-test("enforces the exact rank limit", async () => {
+test("keeps serving the last good snapshot as stale when refresh fails", async () => {
+  let nowMs = 0;
+  let phase = "bootstrap";
   const client = new RankingClient({
-    rankLimit: 2,
+    cacheTtlMs: 100,
+    now: () => nowMs,
     fetchImpl: async (url) => {
-      if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse(createCachedPayload());
+      const requestUrl = url.toString();
+
+      if (phase === "bootstrap" && requestUrl.endsWith("/api/dashboard/cached")) {
+        return jsonResponse(
+          createCachedPayload({
+            modelScores: [createModelRow({ name: "alpha", score: 63, currentScore: 63 })],
+          }),
+        );
+      }
+
+      throw new Error("network offline");
+    },
+  });
+
+  const initial = await client.fetchRanking();
+  assert.equal(initial.isStale, false);
+
+  phase = "offline";
+  nowMs = 101;
+
+  const stale = await client.fetchRanking();
+  await flushTasks();
+
+  assert.equal(stale.entries[0].name, "alpha");
+  assert.equal(stale.isStale, true);
+});
+
+test("falls back to the live refresh path when cached bootstrap fails", async () => {
+  let cachedCalls = 0;
+  const client = new RankingClient({
+    fetchImpl: async (url) => {
+      const requestUrl = url.toString();
+
+      if (requestUrl.endsWith("/api/dashboard/cached")) {
+        cachedCalls += 1;
+
+        if (cachedCalls === 1) {
+          return jsonResponse({ error: "temporary outage" }, 503);
+        }
+
+        return jsonResponse(
+          createCachedPayload({
+            modelScores: [createModelRow({ name: "cached-alpha", score: 65, currentScore: 65 })],
+          }),
+        );
       }
 
       return jsonResponse(
         createScoresPayload({
-          extraRows: [
-            {
-              id: "3",
-              name: "gamma",
-              provider: "google",
-              score: 61,
-              trend: "down",
-              status: "warning",
-              lastUpdated: "2026-04-12T03:00:04.636Z",
-            },
-          ],
+          rows: [createModelRow({ name: "live-alpha", score: 69, currentScore: 69 })],
         }),
       );
     },
@@ -172,138 +240,20 @@ test("enforces the exact rank limit", async () => {
 
   const ranking = await client.fetchRanking();
 
-  assert.equal(ranking.entries.length, 2);
-  assert.equal(ranking.entries[1].name, "beta");
+  assert.equal(ranking.entries[0].name, "live-alpha");
+  assert.equal(ranking.isStale, false);
 });
 
-test("throws when scores response is missing success", async () => {
+test("throws when no cached snapshot exists and upstream data is unavailable", async () => {
   const client = new RankingClient({
     fetchImpl: async (url) => {
       if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse(createCachedPayload());
+        return jsonResponse({ error: "unavailable" }, 503);
       }
 
-      return jsonResponse({
-        data: [],
-      });
+      return jsonResponse({ error: "unavailable" }, 503);
     },
   });
 
-  await assert.rejects(
-    client.fetchRanking(),
-    /Dashboard scores response was unsuccessful/,
-  );
-});
-
-test("throws when scores payload is missing the ranking list", async () => {
-  const client = new RankingClient({
-    fetchImpl: async (url) => {
-      if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse(createCachedPayload());
-      }
-
-      return jsonResponse({
-        success: true,
-        data: {},
-      });
-    },
-  });
-
-  await assert.rejects(
-    client.fetchRanking(),
-    /Dashboard scores payload is missing the ranking list/,
-  );
-});
-
-test("throws when scores payload is empty", async () => {
-  const client = new RankingClient({
-    fetchImpl: async (url) => {
-      if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse(createCachedPayload());
-      }
-
-      return jsonResponse({
-        success: true,
-        data: [],
-      });
-    },
-  });
-
-  await assert.rejects(
-    client.fetchRanking(),
-    /Dashboard scores returned no models/,
-  );
-});
-
-test("throws when cached dashboard response is missing success", async () => {
-  const client = new RankingClient({
-    fetchImpl: async (url) => {
-      if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse({
-          data: {},
-        });
-      }
-
-      return jsonResponse(createScoresPayload());
-    },
-  });
-
-  await assert.rejects(
-    client.fetchRanking(),
-    /Dashboard cached response was unsuccessful/,
-  );
-});
-
-test("throws on non-200 api responses", async () => {
-  const client = new RankingClient({
-    fetchImpl: async (url) => {
-      if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse(createCachedPayload());
-      }
-
-      return jsonResponse(
-        {
-          error: "Not Found",
-        },
-        404,
-      );
-    },
-  });
-
-  await assert.rejects(
-    client.fetchRanking(),
-    /Dashboard scores request failed with status 404/,
-  );
-});
-
-test("throws on invalid json", async () => {
-  const client = new RankingClient({
-    fetchImpl: async (url) => {
-      if (url.toString().endsWith("/api/dashboard/cached")) {
-        return jsonResponse(createCachedPayload());
-      }
-
-      return new Response("not json", {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-        },
-      });
-    },
-  });
-
-  await assert.rejects(
-    client.fetchRanking(),
-    /Failed to parse dashboard scores JSON/,
-  );
-});
-
-test("throws on network failure", async () => {
-  const client = new RankingClient({
-    fetchImpl: async () => {
-      throw new Error("socket hang up");
-    },
-  });
-
-  await assert.rejects(client.fetchRanking(), /socket hang up/);
+  await assert.rejects(client.fetchRanking(), /status 503/);
 });

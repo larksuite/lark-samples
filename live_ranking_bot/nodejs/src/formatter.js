@@ -1,12 +1,17 @@
 import { getSupportedCommands } from "./commands.js";
 
-export function formatRankingMessage({ entries, summary }) {
-  const lines = [
-    "AI Stupid Meter Live Ranking",
+export function formatRankingMessage({ entries, summary, isStale = false }) {
+  const lines = ["AI Stupid Meter Live Ranking"];
+
+  if (isStale) {
+    lines.push("Data may be stale while the bot refreshes the latest ranking.");
+  }
+
+  lines.push(
     `Summary: ${summary.snapshot}`,
     `Updated: ${formatUtcTimestamp(summary.updatedAt)}`,
     "",
-  ];
+  );
 
   entries.forEach((entry, index) => {
     lines.push(

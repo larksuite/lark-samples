@@ -36,6 +36,8 @@ test("creates bot runtime with SDK wiring", () => {
     env: {
       APP_ID: "cli_test",
       APP_SECRET: "secret",
+      BOT_OPEN_ID: "ou_bot",
+      BOT_USER_ID: "cli_bot",
       RANK_LIMIT: "5",
     },
     fetchImpl: async () => {
@@ -46,6 +48,8 @@ test("creates bot runtime with SDK wiring", () => {
   assert.equal(runtime.baseConfig.appId, "cli_test");
   assert.equal(runtime.baseConfig.appSecret, "secret");
   assert.equal(runtime.baseConfig.domain, "https://open.feishu.cn");
+  assert.equal(runtime.config.botOpenId, "ou_bot");
+  assert.equal(runtime.config.botUserId, "cli_bot");
   assert.equal(runtime.config.rankLimit, 5);
   assert.ok(runtime.feishuClient instanceof FakeClient);
   assert.ok(runtime.wsClient instanceof FakeWsClient);

@@ -20,6 +20,8 @@ export function loadRuntimeConfig(env = process.env) {
     domain: env.BASE_DOMAIN?.trim() || DEFAULT_FEISHU_DOMAIN,
     aistupidBaseUrl:
       env.AISTUPID_BASE_URL?.trim() || DEFAULT_AISTUPID_BASE_URL,
+    botOpenId: trimOptionalValue(env.BOT_OPEN_ID),
+    botUserId: trimOptionalValue(env.BOT_USER_ID),
     rankLimit: parseRankLimit(env.RANK_LIMIT),
   };
 }
@@ -32,4 +34,13 @@ function parseRankLimit(value) {
   }
 
   return parsed;
+}
+
+function trimOptionalValue(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }

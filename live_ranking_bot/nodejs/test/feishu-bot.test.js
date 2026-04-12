@@ -86,10 +86,11 @@ test("uses create message for direct chat ranking command", async () => {
   assert.equal(feishu.replyCalls.length, 0);
   assert.equal(feishu.createCalls[0].params.receive_id_type, "chat_id");
   assert.equal(feishu.createCalls[0].data.receive_id, "oc_direct");
+  assert.equal(feishu.createCalls[0].data.uuid, "lazybot:om_direct");
   assert.match(parseTextContent(feishu.createCalls[0]), /AI Stupid Meter Live Ranking/);
 });
 
-test("uses reply message for group chat ranking command", async () => {
+test("uses direct create message for group chat ranking command", async () => {
   const feishu = createFeishuClientStub();
   const rankingClient = {
     fetchRanking: async () => createRankingFixture(),
@@ -106,17 +107,25 @@ test("uses reply message for group chat ranking command", async () => {
       message_id: "om_group",
       message_type: "text",
       chat_type: "group",
-      mentions: [{ key: "@_user_1", name: "lazybot" }],
+      mentions: [
+        {
+          key: "@_user_1",
+          name: "lazybot",
+          id: { open_id: "ou_bot" },
+        },
+      ],
       content: JSON.stringify({
         text: '<at user_id="ou_bot">lazybot</at> /leaderboard',
       }),
     },
   });
 
-  assert.equal(feishu.createCalls.length, 0);
-  assert.equal(feishu.replyCalls.length, 1);
-  assert.equal(feishu.replyCalls[0].path.message_id, "om_group");
-  assert.match(parseTextContent(feishu.replyCalls[0]), /AI Stupid Meter Live Ranking/);
+  assert.equal(feishu.createCalls.length, 1);
+  assert.equal(feishu.replyCalls.length, 0);
+  assert.equal(feishu.createCalls[0].params.receive_id_type, "chat_id");
+  assert.equal(feishu.createCalls[0].data.receive_id, "oc_group");
+  assert.equal(feishu.createCalls[0].data.uuid, "lazybot:om_group");
+  assert.match(parseTextContent(feishu.createCalls[0]), /AI Stupid Meter Live Ranking/);
 });
 
 test("uses create message for direct /leaderboard command", async () => {
@@ -191,9 +200,42 @@ test("ignores group bot mentions that are not slash commands", async () => {
       message_id: "om_group_hello",
       message_type: "text",
       chat_type: "group",
-      mentions: [{ key: "@_user_1", name: "lazybot" }],
+      mentions: [{ key: "@_user_1", name: "lazybot", id: { open_id: "ou_bot" } }],
       content: JSON.stringify({
         text: '<at user_id="ou_bot">lazybot</at> hello there',
+      }),
+    },
+  });
+
+  assert.equal(feishu.createCalls.length, 0);
+  assert.equal(feishu.replyCalls.length, 0);
+});
+
+test("ignores group slash commands that mention another user when bot identity is configured", async () => {
+  const feishu = createFeishuClientStub();
+  const rankingClient = {
+    fetchRanking: async () => {
+      throw new Error("should not fetch ranking");
+    },
+  };
+
+  const handler = createMessageHandler({
+    feishuClient: feishu.client,
+    rankingClient,
+    botIdentity: {
+      openId: "ou_bot",
+    },
+  });
+
+  await handler({
+    message: {
+      chat_id: "oc_group",
+      message_id: "om_group_other_user",
+      message_type: "text",
+      chat_type: "group",
+      mentions: [{ key: "@_user_1", name: "someone-else", id: { open_id: "ou_other" } }],
+      content: JSON.stringify({
+        text: '<at user_id="ou_other">someone-else</at> /rank',
       }),
     },
   });
@@ -248,15 +290,17 @@ test("sends usage guidance for unsupported slash commands in a mentioned group m
       message_id: "om_group_help",
       message_type: "text",
       chat_type: "group",
-      mentions: [{ key: "@_user_1", name: "lazybot" }],
+      mentions: [{ key: "@_user_1", name: "lazybot", id: { open_id: "ou_bot" } }],
       content: JSON.stringify({
         text: '<at user_id="ou_bot">lazybot</at> /help',
       }),
     },
   });
 
-  assert.equal(feishu.replyCalls.length, 1);
-  assert.match(parseTextContent(feishu.replyCalls[0]), /Supported commands:/);
+  assert.equal(feishu.createCalls.length, 1);
+  assert.equal(feishu.replyCalls.length, 0);
+  assert.equal(feishu.createCalls[0].data.receive_id, "oc_group");
+  assert.match(parseTextContent(feishu.createCalls[0]), /Supported commands:/);
 });
 
 test("sends usage guidance for non-text payloads", async () => {
@@ -418,18 +462,13 @@ test("ignores duplicate deliveries after a successful reply", async () => {
   assert.equal(feishu.createCalls.length, 1);
 });
 
-test("retries the same message id after ranking fetch failure", async () => {
+test("does not send the unavailable message twice for the same message id", async () => {
   const feishu = createFeishuClientStub();
   let fetchCalls = 0;
   const rankingClient = {
     fetchRanking: async () => {
       fetchCalls += 1;
-
-      if (fetchCalls === 1) {
-        throw new Error("upstream unavailable");
-      }
-
-      return createRankingFixture();
+      throw new Error("upstream unavailable");
     },
   };
 
@@ -450,8 +489,42 @@ test("retries the same message id after ranking fetch failure", async () => {
   await handler({ message });
   await handler({ message });
 
-  assert.equal(fetchCalls, 2);
-  assert.equal(feishu.createCalls.length, 2);
+  assert.equal(fetchCalls, 1);
+  assert.equal(feishu.createCalls.length, 1);
   assert.match(parseTextContent(feishu.createCalls[0]), /Ranking unavailable right now/);
-  assert.match(parseTextContent(feishu.createCalls[1]), /AI Stupid Meter Live Ranking/);
+});
+
+test("retries the same message id after outbound send failure", async () => {
+  const feishu = createFeishuClientStub();
+  const rankingClient = {
+    fetchRanking: async () => createRankingFixture(),
+  };
+  let sendCalls = 0;
+  feishu.client.im.v1.message.create = async (payload) => {
+    sendCalls += 1;
+    if (sendCalls === 1) {
+      throw new Error("socket hang up");
+    }
+    feishu.createCalls.push(payload);
+  };
+
+  const handler = createMessageHandler({
+    feishuClient: feishu.client,
+    rankingClient,
+    logger: { error() {} },
+  });
+
+  const message = {
+    chat_id: "oc_direct",
+    message_id: "om_send_retry",
+    message_type: "text",
+    chat_type: "p2p",
+    content: JSON.stringify({ text: "/rank" }),
+  };
+
+  await handler({ message });
+  await handler({ message });
+
+  assert.equal(sendCalls, 2);
+  assert.equal(feishu.createCalls.length, 1);
 });

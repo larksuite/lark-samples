@@ -28,6 +28,10 @@ export function createBotRuntime({
   const messageReceiptStore = new MessageReceiptStore();
   const eventDispatcher = new sdk.EventDispatcher({}).register({
     "im.message.receive_v1": createMessageHandler({
+      botIdentity: {
+        openId: config.botOpenId,
+        userId: config.botUserId,
+      },
       feishuClient,
       messageReceiptStore,
       rankingClient,
