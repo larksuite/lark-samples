@@ -3,7 +3,7 @@ import { getSupportedCommands } from "./commands.js";
 export function formatRankingMessage({ entries, summary }) {
   const lines = [
     "AI Stupid Meter Live Ranking",
-    `Global Index: ${summary.globalScore} (${summary.trend})`,
+    `Summary: ${summary.snapshot}`,
     `Updated: ${formatUtcTimestamp(summary.updatedAt)}`,
     "",
   ];

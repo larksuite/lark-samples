@@ -2,6 +2,7 @@ import * as Lark from "@larksuiteoapi/node-sdk";
 
 import { loadRuntimeConfig } from "./config.js";
 import { createMessageHandler } from "./feishu-bot.js";
+import { MessageReceiptStore } from "./message-receipt-store.js";
 import { RankingClient } from "./ranking-client.js";
 
 export function createBotRuntime({
@@ -24,9 +25,11 @@ export function createBotRuntime({
     fetchImpl,
     rankLimit: config.rankLimit,
   });
+  const messageReceiptStore = new MessageReceiptStore();
   const eventDispatcher = new sdk.EventDispatcher({}).register({
     "im.message.receive_v1": createMessageHandler({
       feishuClient,
+      messageReceiptStore,
       rankingClient,
       logger,
     }),
@@ -37,6 +40,7 @@ export function createBotRuntime({
     config,
     eventDispatcher,
     feishuClient,
+    messageReceiptStore,
     rankingClient,
     wsClient,
   };

@@ -11,6 +11,7 @@ test("formats summary and ranked entries in plain text", () => {
   const message = formatRankingMessage({
     entries: [
       {
+        id: "1",
         name: "alpha",
         provider: "openai",
         score: 67,
@@ -18,6 +19,7 @@ test("formats summary and ranked entries in plain text", () => {
         status: "good",
       },
       {
+        id: "2",
         name: "beta",
         provider: "anthropic",
         score: 65,
@@ -25,6 +27,7 @@ test("formats summary and ranked entries in plain text", () => {
         status: "good",
       },
       {
+        id: "3",
         name: "gamma",
         provider: "google",
         score: 61,
@@ -33,14 +36,17 @@ test("formats summary and ranked entries in plain text", () => {
       },
     ],
     summary: {
-      globalScore: 84,
-      trend: "stable",
+      snapshot:
+        "Best for code: alpha (#1), drift alerts 2, degradations 1, confidence 60%",
       updatedAt: "2026-04-12T03:20:43.338Z",
     },
   });
 
   assert.match(message, /AI Stupid Meter Live Ranking/);
-  assert.match(message, /Global Index: 84 \(stable\)/);
+  assert.match(
+    message,
+    /Summary: Best for code: alpha \(#1\), drift alerts 2, degradations 1, confidence 60%/,
+  );
   assert.match(message, /Updated: 2026-04-12 03:20 UTC/);
   assert.match(message, /1\. alpha - 67 \(openai, up\/good\)/);
   assert.match(message, /2\. beta - 65 \(anthropic, stable\/good\)/);

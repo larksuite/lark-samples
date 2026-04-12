@@ -1,12 +1,14 @@
-import { parseCommand } from "./commands.js";
+import { normalizeWhitespace, parseCommand } from "./commands.js";
 import {
   formatRankingMessage,
   formatUnavailableMessage,
   formatUsageMessage,
 } from "./formatter.js";
+import { MessageReceiptStore } from "./message-receipt-store.js";
 
 export function createMessageHandler({
   feishuClient,
+  messageReceiptStore = new MessageReceiptStore(),
   rankingClient,
   logger = console,
 }) {
@@ -17,53 +19,77 @@ export function createMessageHandler({
       return;
     }
 
-    const parsedText = parseMessageText(message);
-
-    if (!parsedText.ok) {
-      await sendTextMessage({
-        feishuClient,
-        message,
-        text: formatUsageMessage(),
-      });
-      return;
-    }
-
-    const command = parseCommand(parsedText.text);
-
-    if (command === null) {
-      return;
-    }
-
-    if (command.type === "unsupported") {
-      await sendTextMessage({
-        feishuClient,
-        message,
-        text: formatUsageMessage(),
-      });
+    const reservation = messageReceiptStore.reserve(message.message_id);
+    if (!reservation.accepted) {
       return;
     }
 
     try {
-      const ranking = await rankingClient.fetchRanking();
+      const commandContext = extractCommandContext(message);
 
-      await sendTextMessage({
-        feishuClient,
-        message,
-        text: formatRankingMessage(ranking),
-      });
+      if (!commandContext.ok) {
+        await sendManagedTextMessage({
+          feishuClient,
+          message,
+          messageReceiptStore,
+          onSuccess: "done",
+          text: formatUsageMessage(),
+        });
+        return;
+      }
+
+      if (commandContext.command === null) {
+        messageReceiptStore.markDone(message.message_id);
+        return;
+      }
+
+      if (commandContext.command.type === "unsupported") {
+        await sendManagedTextMessage({
+          feishuClient,
+          message,
+          messageReceiptStore,
+          onSuccess: "done",
+          text: formatUsageMessage(),
+        });
+        return;
+      }
+
+      try {
+        const ranking = await rankingClient.fetchRanking();
+
+        await sendManagedTextMessage({
+          feishuClient,
+          message,
+          messageReceiptStore,
+          onSuccess: "done",
+          text: formatRankingMessage(ranking),
+        });
+      } catch (error) {
+        logger.error?.("Failed to fetch ranking", error);
+
+        await sendManagedTextMessage({
+          feishuClient,
+          message,
+          messageReceiptStore,
+          onSuccess: "clear",
+          text: formatUnavailableMessage(),
+        });
+      }
     } catch (error) {
-      logger.error?.("Failed to fetch ranking", error);
-
-      await sendTextMessage({
-        feishuClient,
-        message,
-        text: formatUnavailableMessage(),
-      });
+      messageReceiptStore.clear(message.message_id);
+      logger.error?.("Failed to handle incoming message", error);
     }
   };
 }
 
-function parseMessageText(message) {
+function extractCommandContext(message) {
+  const isGroupChat = message.chat_type !== "p2p";
+  const hasMentionSignal = hasMentionedBotSignal(message);
+
+  if (isGroupChat && !hasMentionSignal) {
+    return { ok: true, command: null };
+  }
+
   if (message.message_type !== "text") {
     return { ok: false };
   }
@@ -75,13 +101,53 @@ function parseMessageText(message) {
       return { ok: false };
     }
 
+    const strippedText = stripMentionMarkup(payload.text);
+    const normalizedText = normalizeWhitespace(strippedText);
+
+    if (isGroupChat && !normalizedText.startsWith("/")) {
+      return { ok: true, command: null };
+    }
+
     return {
       ok: true,
-      text: payload.text.trim().replace(/\s+/g, " "),
+      command: parseCommand(normalizedText),
     };
   } catch (error) {
     return { ok: false };
   }
+}
+
+function hasMentionedBotSignal(message) {
+  if (Array.isArray(message.mentions) && message.mentions.length > 0) {
+    return true;
+  }
+
+  return typeof message.content === "string" && /<at\b/i.test(message.content);
+}
+
+function stripMentionMarkup(text) {
+  return text.replace(/<at\b[^>]*>.*?<\/at>/gis, " ");
+}
+
+async function sendManagedTextMessage({
+  feishuClient,
+  message,
+  messageReceiptStore,
+  onSuccess,
+  text,
+}) {
+  await sendTextMessage({
+    feishuClient,
+    message,
+    text,
+  });
+
+  if (onSuccess === "clear") {
+    messageReceiptStore.clear(message.message_id);
+    return;
+  }
+
+  messageReceiptStore.markDone(message.message_id);
 }
 
 async function sendTextMessage({ feishuClient, message, text }) {

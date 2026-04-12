@@ -1,6 +1,8 @@
 export const DEFAULT_AISTUPID_BASE_URL = "https://aistupidlevel.info";
-const LEADERBOARD_PATH = "/dashboard/cached?period=latest&sortBy=combined&analyticsPeriod=latest";
-const GLOBAL_INDEX_PATH = "/dashboard/global-index";
+// The live site currently exposes dashboard data under these /api sub-routes.
+const SCORES_PATH = "/api/dashboard/scores";
+const CACHED_DASHBOARD_PATH = "/api/dashboard/cached";
+export const MODEL_DETAILS_PATH_PREFIX = "/api/models/";
 
 export class RankingClient {
   constructor({
@@ -18,21 +20,17 @@ export class RankingClient {
   }
 
   async fetchRanking() {
-    const [leaderboardPayload, globalIndexPayload] = await Promise.all([
-      this.fetchJson(LEADERBOARD_PATH, "dashboard leaderboard"),
-      this.fetchJson(GLOBAL_INDEX_PATH, "dashboard global index"),
+    const [scoresPayload, cachedDashboardPayload] = await Promise.all([
+      this.fetchJson(SCORES_PATH, "dashboard scores"),
+      this.fetchJson(CACHED_DASHBOARD_PATH, "dashboard cached"),
     ]);
 
-    validateLeaderboardPayload(leaderboardPayload);
-    validateGlobalIndexPayload(globalIndexPayload);
+    validateScoresPayload(scoresPayload);
+    validateCachedDashboardPayload(cachedDashboardPayload);
 
     return {
-      entries: mapEntries(leaderboardPayload.data.modelScores, this.rankLimit),
-      summary: {
-        globalScore: globalIndexPayload.data.current.globalScore,
-        trend: globalIndexPayload.data.trend,
-        updatedAt: globalIndexPayload.data.lastUpdated,
-      },
+      entries: mapEntries(scoresPayload.data, this.rankLimit),
+      summary: mapSummary(cachedDashboardPayload),
     };
   }
 
@@ -70,48 +68,100 @@ function normalizeRankLimit(value) {
   return parsed;
 }
 
-function validateLeaderboardPayload(payload) {
+function validateScoresPayload(payload) {
   if (payload?.success !== true) {
-    throw new Error("Dashboard leaderboard response was unsuccessful");
+    throw new Error("Dashboard scores response was unsuccessful");
   }
 
-  if (!Array.isArray(payload?.data?.modelScores)) {
-    throw new Error("Dashboard leaderboard payload is missing model scores");
+  if (!Array.isArray(payload?.data)) {
+    throw new Error("Dashboard scores payload is missing the ranking list");
   }
 
-  if (payload.data.modelScores.length === 0) {
-    throw new Error("Dashboard leaderboard returned no model scores");
+  if (payload.data.length === 0) {
+    throw new Error("Dashboard scores returned no models");
   }
 }
 
-function validateGlobalIndexPayload(payload) {
+function validateCachedDashboardPayload(payload) {
   if (payload?.success !== true) {
-    throw new Error("Dashboard global index response was unsuccessful");
+    throw new Error("Dashboard cached response was unsuccessful");
   }
 
-  if (typeof payload?.data?.current?.globalScore !== "number") {
-    throw new Error("Dashboard global index payload is missing current score");
-  }
-
-  if (typeof payload?.data?.trend !== "string") {
-    throw new Error("Dashboard global index payload is missing trend");
-  }
-
-  if (typeof payload?.data?.lastUpdated !== "string") {
-    throw new Error("Dashboard global index payload is missing last updated time");
+  if (!payload?.data || typeof payload.data !== "object") {
+    throw new Error("Dashboard cached payload is missing summary data");
   }
 }
 
-function mapEntries(modelScores, rankLimit) {
-  return modelScores.slice(0, rankLimit).map((model) => ({
+function mapEntries(models, rankLimit) {
+  return models.slice(0, rankLimit).map((model) => ({
+    id: String(model.id),
     name: String(model.name),
-    provider: String(model.provider),
-    score:
-      typeof model.currentScore === "number" ? model.currentScore : model.score,
-    trend: String(model.trend),
-    status: String(model.status),
-    lastUpdated: String(model.lastUpdated),
+    provider: firstString(model.provider, model.vendor, "unknown"),
+    score: getModelScore(model),
+    trend: firstString(model.trend, "unknown"),
+    status: firstString(model.status, "unknown"),
+    lastUpdated: firstString(model.lastUpdated, "unknown"),
   }));
+}
+
+function mapSummary(payload) {
+  const summary = payload.data?.transparencyMetrics?.summary ?? {};
+  const bestForCode = payload.data?.recommendations?.bestForCode;
+  const driftCount = Array.isArray(payload.data?.driftIncidents)
+    ? payload.data.driftIncidents.length
+    : 0;
+  const degradationCount = Array.isArray(payload.data?.degradations)
+    ? payload.data.degradations.length
+    : 0;
+  const parts = [];
+
+  if (bestForCode?.name) {
+    parts.push(
+      `Best for code: ${bestForCode.name}${formatOptionalRank(bestForCode.rank)}`,
+    );
+  }
+
+  parts.push(`drift alerts ${driftCount}`);
+  parts.push(`degradations ${degradationCount}`);
+
+  if (typeof summary.confidence === "number") {
+    parts.push(`confidence ${summary.confidence}%`);
+  }
+
+  return {
+    snapshot: parts.join(", "),
+    updatedAt: firstString(summary.lastUpdate, payload.meta?.cachedAt, "unknown"),
+  };
+}
+
+function getModelScore(model) {
+  if (typeof model.currentScore === "number") {
+    return model.currentScore;
+  }
+
+  if (typeof model.score === "number") {
+    return model.score;
+  }
+
+  throw new Error(`Dashboard scores model ${String(model.name)} is missing score`);
+}
+
+function firstString(...values) {
+  for (const value of values) {
+    if (typeof value === "string" && value.length > 0) {
+      return value;
+    }
+  }
+
+  return "unknown";
+}
+
+function formatOptionalRank(rank) {
+  if (Number.isInteger(rank) && rank > 0) {
+    return ` (#${rank})`;
+  }
+
+  return "";
 }
 
 function capitalize(value) {

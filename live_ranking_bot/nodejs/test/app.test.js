@@ -50,6 +50,7 @@ test("creates bot runtime with SDK wiring", () => {
   assert.ok(runtime.feishuClient instanceof FakeClient);
   assert.ok(runtime.wsClient instanceof FakeWsClient);
   assert.ok(runtime.eventDispatcher instanceof FakeEventDispatcher);
+  assert.equal(typeof runtime.messageReceiptStore.reserve, "function");
   assert.equal(
     typeof runtime.eventDispatcher.handlers["im.message.receive_v1"],
     "function",
